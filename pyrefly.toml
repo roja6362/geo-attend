@@ -1,0 +1,20 @@
+project-includes = ["backend"]
+search-path = ["backend"]
+python-interpreter-path = "backend/venv/Scripts/python.exe"
+infer-with-first-use = false
+
+[errors]
+missing-import = "ignore"
+missing-attribute = "ignore"
+bad-index = "ignore"
+bad-unpacking = "ignore"
+not-callable = "ignore"
+no-matching-overload = "ignore"
+bad-keyword-argument = "ignore"
+missing-argument = "ignore"
+unexpected-positional-argument = "ignore"
+unexpected-keyword = "ignore"
+invalid-argument = "ignore"
+bad-argument-type = "ignore"
+bad-argument-count = "ignore"
+incompatible-overload-argument = "ignore"

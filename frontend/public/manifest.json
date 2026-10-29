@@ -1,0 +1,20 @@
+{
+  "name": "Geo-Attend - AI Biometric Attendance",
+  "short_name": "Geo-Attend",
+  "description": "AI-Powered Biometric & Campus Geofenced Attendance System with Immutable Blockchain Ledger",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#09090b",
+  "theme_color": "#059669",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "include": [
+    "backend"
+  ],
+  "extraPaths": [
+    "backend"
+  ],
+  "venvPath": "backend",
+  "venv": "venv",
+  "reportCallIssue": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportArgumentType": "none"
+}
