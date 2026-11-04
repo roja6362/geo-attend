@@ -114,3 +114,4 @@ You have two easy ways to link them:
 
 4. **PWA Mobile App Installation**:
    - Any student or teacher can open the Vercel/Netlify link on their phone and tap **"Download App on Mobile"** or Chrome's **"Add to Home Screen"** to install it as an app without an app store!
+

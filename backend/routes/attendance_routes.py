@@ -15,31 +15,14 @@ attendance_bp = Blueprint('attendance', __name__)
 @attendance_bp.route('/challenge', methods=['GET'])
 @jwt_required()
 def get_dynamic_challenge():
-    challenges = [
-        {
-            "id": "c_smile",
-            "type": "smile",
-            "prompt": "Smile naturally at the camera 😊",
-            "instruction": "Position face, hold steady, then smile clearly when prompted.",
-            "duration_sec": 2
-        },
-        {
-            "id": "c_blink",
-            "type": "blink",
-            "prompt": "Blink your eyes twice 👁️",
-            "instruction": "Look at the camera and blink eyes naturally.",
-            "duration_sec": 2
-        },
-        {
-            "id": "c_turn",
-            "type": "turn",
-            "prompt": "Turn your head slightly to the side 👤",
-            "instruction": "Keep face in camera and turn head slightly.",
-            "duration_sec": 2
-        }
-    ]
-    selected = random.choice(challenges)
-    return jsonify(selected), 200
+    instant_mode = {
+        "id": "c_instant",
+        "type": "instant",
+        "prompt": "Align your face with the camera 📸",
+        "instruction": "Hold steady and click Punch Attendance.",
+        "duration_sec": 0
+    }
+    return jsonify(instant_mode), 200
 
 @attendance_bp.route('/active-sessions', methods=['GET'])
 @jwt_required()

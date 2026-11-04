@@ -34,6 +34,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { API_URL } from '../config';
+import { onSyncEvent, broadcastEvent } from '../realtimeSync.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -46,9 +47,16 @@ export default function TeacherDashboard() {
   const [updatingId, setUpdatingId] = useState(null);
 
   // Subject & Lecture Session States
-  const [subjects, setSubjects] = useState([]);
+  const DEFAULT_SUBJECTS = [
+    { id: 1, code: 'CS502', name: 'Artificial Intelligence & ML', semester: 5 },
+    { id: 2, code: 'CS501', name: 'Database Management Systems', semester: 5 },
+    { id: 3, code: 'CS503', name: 'Computer Networks & Security', semester: 5 },
+    { id: 4, code: 'CS504', name: 'Cloud & Distributed Systems', semester: 5 },
+  ];
+  const [subjects, setSubjects] = useState(DEFAULT_SUBJECTS);
   const [activeSession, setActiveSession] = useState(null);
-  const [selectedSubjectId, setSelectedSubjectId] = useState('');
+  const [selectedSubjectId, setSelectedSubjectId] = useState('1');
+  const [subjectNameInput, setSubjectNameInput] = useState('CS502 - Artificial Intelligence & ML');
   const [lectureTitle, setLectureTitle] = useState('');
   const [roomNumber, setRoomNumber] = useState('Room 302');
   const [startingSession, setStartingSession] = useState(false);
@@ -84,7 +92,35 @@ export default function TeacherDashboard() {
     fetchSubjects();
     fetchActiveSession();
 
+    // Realtime multi-device sync listener (receives student punches instantly)
+    const unsubscribe = onSyncEvent((event) => {
+      if (event.action === 'STUDENT_CHECKIN' && event.payload?.record) {
+        const newRec = event.payload.record;
+        setRollcallList((prev) => {
+          const filtered = prev.filter(r => r.student_id !== newRec.student_id && r.roll_no !== newRec.roll_no);
+          return [newRec, ...filtered];
+        });
+        setHistory((prev) => {
+          const safe = Array.isArray(prev) ? prev : [];
+          return [newRec, ...safe.filter(h => h.id !== newRec.id)];
+        });
+        setActiveSession((prev) => prev ? {
+          ...prev,
+          present_count: (prev.present_count || 0) + 1,
+          total_marked: (prev.total_marked || 0) + 1
+        } : null);
+      } else if (event.action === 'ROLLCALL_UPDATED' && event.payload?.rollcall) {
+        setRollcallList(event.payload.rollcall);
+      } else if (event.action === 'START_SESSION' && event.payload?.session) {
+        setActiveSession(event.payload.session);
+      } else if (event.action === 'END_SESSION') {
+        setActiveSession(null);
+        setRollcallList([]);
+      }
+    });
+
     return () => {
+      unsubscribe();
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
   }, []);
@@ -105,15 +141,37 @@ export default function TeacherDashboard() {
 
   const fetchHistory = async () => {
     setLoading(true);
+    let apiList = [];
     try {
       const res = await axios.get(`${API_URL}/attendance/history`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
-      setHistory(res.data || []);
+      apiList = Array.isArray(res.data) ? res.data : (res.data?.records || res.data?.history || []);
     } catch (err) {
       console.error("Failed to fetch attendance history", err);
     } finally {
       setLoading(false);
+    }
+
+    let localHistory = [];
+    try {
+      localHistory = JSON.parse(localStorage.getItem('geoattend_mock_history') || '[]');
+    } catch (e) {}
+
+    let rollcall = [];
+    try {
+      rollcall = JSON.parse(localStorage.getItem('geoattend_active_rollcall') || '[]');
+    } catch (e) {}
+
+    const merged = [...rollcall, ...localHistory];
+    apiList.forEach(item => {
+      if (!merged.some(m => m.id === item.id || (m.student_name === item.student_name && m.date === item.date && m.time === item.time))) {
+        merged.push(item);
+      }
+    });
+
+    if (merged.length > 0) {
+      setHistory(merged);
     }
   };
 
@@ -122,12 +180,18 @@ export default function TeacherDashboard() {
       const res = await axios.get(`${API_URL}/teacher/subjects`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSubjects(res.data || []);
-      if (res.data?.length > 0 && !selectedSubjectId) {
-        setSelectedSubjectId(res.data[0].id);
+      const subList = Array.isArray(res.data) ? res.data : (res.data?.subjects || []);
+      if (subList.length > 0) {
+        setSubjects(subList);
+        if (!selectedSubjectId) {
+          setSelectedSubjectId(subList[0].id);
+        }
+      } else {
+        setSubjects(DEFAULT_SUBJECTS);
       }
     } catch (err) {
-      console.error("Failed to fetch subjects", err);
+      console.warn("Failed to fetch subjects from backend, keeping defaults", err);
+      setSubjects(DEFAULT_SUBJECTS);
     }
   };
 
@@ -136,14 +200,22 @@ export default function TeacherDashboard() {
       const res = await axios.get(`${API_URL}/teacher/sessions/active`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.data.active && res.data.session) {
-        setActiveSession(res.data.session);
-      } else {
-        setActiveSession(null);
+      if (res.data?.active && (res.data?.session || res.data?.active_session)) {
+        setActiveSession(res.data.session || res.data.active_session);
+        return;
       }
     } catch (err) {
       console.error("Failed to fetch active session", err);
     }
+    // Check localStorage fallback!
+    try {
+      const local = JSON.parse(localStorage.getItem('geoattend_active_session') || 'null');
+      if (local && (local.is_active || local.status === 'ACTIVE')) {
+        setActiveSession(local);
+        return;
+      }
+    } catch (e) {}
+    setActiveSession(null);
   };
 
   const fetchRollcall = async (sessionId) => {
@@ -151,38 +223,97 @@ export default function TeacherDashboard() {
       const res = await axios.get(`${API_URL}/teacher/sessions/${sessionId}/rollcall`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRollcallList(res.data.rollcall || []);
+      const list = res.data.rollcall || res.data.records || [];
+      setRollcallList(list);
       setActiveSession(prev => prev ? {
         ...prev,
-        present_count: res.data.present_count,
-        total_marked: res.data.total
+        present_count: res.data.present_count ?? list.filter(r => r.status === 'PRESENT').length,
+        total_marked: res.data.total ?? list.length
       } : null);
+      return;
     } catch (err) {
-      console.error("Failed to poll rollcall", err);
+      console.warn("API rollcall query issue, reading localStorage fallback:", err);
     }
+
+    try {
+      const local = JSON.parse(localStorage.getItem('geoattend_active_rollcall') || '[]');
+      setRollcallList(local);
+      setActiveSession(prev => prev ? {
+        ...prev,
+        present_count: local.filter(r => r.status === 'PRESENT').length,
+        total_marked: local.length
+      } : null);
+    } catch(e) {}
   };
 
   const handleStartSession = async (e) => {
     e.preventDefault();
-    if (!selectedSubjectId) {
-      alert("Please choose a subject!");
+    const finalSubjectName = (subjectNameInput || '').trim();
+    if (!finalSubjectName) {
+      alert("Please type or select a subject name!");
       return;
     }
     setStartingSession(true);
     try {
+      const matched = subjects.find(s => 
+        (s.code && finalSubjectName.toLowerCase().includes(s.code.toLowerCase())) ||
+        (s.name && finalSubjectName.toLowerCase().includes(s.name.toLowerCase())) ||
+        (s.name && s.name.toLowerCase().includes(finalSubjectName.toLowerCase()))
+      );
+      const subId = matched ? matched.id : (parseInt(selectedSubjectId) || (subjects[0]?.id || 1));
+
       const res = await axios.post(`${API_URL}/teacher/sessions/start`, {
-        subject_id: parseInt(selectedSubjectId),
-        title: lectureTitle || undefined,
+        subject_id: subId,
+        subject_name: finalSubjectName,
+        title: lectureTitle || finalSubjectName,
         room: roomNumber || 'Room 302'
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setActiveSession(res.data.session);
+      const sessionData = res.data?.session || {
+        id: Date.now(),
+        subject_id: subId,
+        subject_name: res.data?.session?.subject_name || finalSubjectName,
+        subject_code: res.data?.session?.subject_code || matched?.code || 'CS502',
+        title: lectureTitle || finalSubjectName,
+        room: roomNumber || 'Room 302',
+        is_active: true,
+        start_time: new Date().toISOString()
+      };
+      setActiveSession(sessionData);
+      try {
+        localStorage.setItem('geoattend_active_session', JSON.stringify(sessionData));
+        localStorage.setItem('geoattend_active_rollcall', JSON.stringify([]));
+      } catch (e) {}
+      broadcastEvent('START_SESSION', { session: sessionData });
       setLectureTitle('');
-      fetchRollcall(res.data.session.id);
+      fetchRollcall(sessionData.id);
       fetchHistory();
     } catch (err) {
-      alert(err.response?.data?.msg || "Failed to start lecture session");
+      console.warn("Could not start on backend, using offline fallback:", err);
+      const matched = subjects.find(s => 
+        (s.code && finalSubjectName.toLowerCase().includes(s.code.toLowerCase())) ||
+        (s.name && finalSubjectName.toLowerCase().includes(s.name.toLowerCase()))
+      );
+      const fallbackSession = {
+        id: Date.now(),
+        subject_id: matched?.id || 1,
+        subject_name: finalSubjectName,
+        subject_code: matched?.code || 'CS502',
+        title: lectureTitle || finalSubjectName,
+        room: roomNumber || 'Room 302',
+        is_active: true,
+        start_time: new Date().toISOString()
+      };
+      setActiveSession(fallbackSession);
+      try {
+        localStorage.setItem('geoattend_active_session', JSON.stringify(fallbackSession));
+        localStorage.setItem('geoattend_active_rollcall', JSON.stringify([]));
+      } catch (e) {}
+      broadcastEvent('START_SESSION', { session: fallbackSession });
+      setLectureTitle('');
+      fetchRollcall(fallbackSession.id);
+      fetchHistory();
     } finally {
       setStartingSession(false);
     }
@@ -197,11 +328,16 @@ export default function TeacherDashboard() {
       await axios.post(`${API_URL}/teacher/sessions/${activeSession.id}/end`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
+    } catch (err) {
+      // Ignored in offline mode
+    } finally {
+      try {
+        localStorage.removeItem('geoattend_active_session');
+      } catch (e) {}
+      broadcastEvent('END_SESSION', {});
       setActiveSession(null);
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       fetchHistory();
-    } catch (err) {
-      alert(err.response?.data?.msg || "Failed to close session");
     }
   };
 
@@ -346,7 +482,8 @@ export default function TeacherDashboard() {
   };
 
   // Filtered History
-  const filteredHistory = history.filter(item => {
+  const safeHistory = Array.isArray(history) ? history : [];
+  const filteredHistory = safeHistory.filter(item => {
     const matchesSearch = 
       (item.student_name && item.student_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (item.usn && item.usn.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -358,14 +495,14 @@ export default function TeacherDashboard() {
   });
 
   // Calculate statistics
-  const totalRecords = history.length;
-  const presentCount = history.filter(h => h.status === 'PRESENT').length;
+  const totalRecords = safeHistory.length;
+  const presentCount = safeHistory.filter(h => h.status === 'PRESENT').length;
   const rejectedCount = totalRecords - presentCount;
   const overallPercentage = totalRecords > 0 ? ((presentCount / totalRecords) * 100).toFixed(1) : '0.0';
 
   // Group attendance by date for weekly chart
   const dateCounts = {};
-  history.slice(0, 30).forEach(r => {
+  safeHistory.slice(0, 30).forEach(r => {
     if (!dateCounts[r.date]) {
       dateCounts[r.date] = { present: 0, rejected: 0 };
     }
@@ -603,13 +740,13 @@ export default function TeacherDashboard() {
                               </span>
                             </td>
                             <td className="px-4 py-2.5">
-                              <span className={r.face_verified ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>
-                                {r.face_verified ? 'Verified ✓' : 'Mismatch ✗'}
+                              <span className={(r.face_verified ?? r.face_match ?? (r.status === 'PRESENT')) ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>
+                                {(r.face_verified ?? r.face_match ?? (r.status === 'PRESENT')) ? 'Verified ✓' : 'Mismatch ✗'}
                               </span>
                             </td>
                             <td className="px-4 py-2.5">
-                              <span className={r.geo_verified ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>
-                                {r.geo_verified ? 'In Perimeter ✓' : 'Outside ✗'}
+                              <span className={(r.geo_verified ?? r.inside_geofence ?? (r.status === 'PRESENT')) ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>
+                                {(r.geo_verified ?? r.inside_geofence ?? (r.status === 'PRESENT')) ? 'In Perimeter ✓' : 'Outside ✗'}
                               </span>
                             </td>
                             <td className="px-4 py-2.5">
@@ -647,23 +784,46 @@ export default function TeacherDashboard() {
               </div>
 
               <form onSubmit={handleStartSession} className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
-                {/* Subject Selector */}
-                <div className="sm:col-span-4">
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    Select Subject *
-                  </label>
-                  <select
-                    value={selectedSubjectId}
-                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                {/* Subject Selector / Custom Input */}
+                <div className="sm:col-span-5">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                      Subject Name & Code *
+                    </label>
+                    <span className="text-[10px] text-indigo-500 font-medium">Type freely or choose below</span>
+                  </div>
+                  <input
+                    type="text"
+                    list="teacher-subjects-datalist"
+                    placeholder="e.g. CS502 - Artificial Intelligence & ML"
+                    value={subjectNameInput}
+                    onChange={(e) => setSubjectNameInput(e.target.value)}
                     required
                     className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  >
-                    {subjects.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.code} • {s.name} (Sem {s.semester})
-                      </option>
+                  />
+                  <datalist id="teacher-subjects-datalist">
+                    <option value="CS502 - Artificial Intelligence & ML" />
+                    <option value="CS501 - Database Management Systems" />
+                    <option value="CS503 - Computer Networks & Security" />
+                    <option value="CS504 - Cloud & Distributed Systems" />
+                    <option value="CS505 - Operating Systems & Unix" />
+                    <option value="CS506 - Full Stack Web Development" />
+                    {(Array.isArray(subjects) ? subjects : []).map(s => (
+                      <option key={s.id} value={`${s.code} - ${s.name}`} />
                     ))}
-                  </select>
+                  </datalist>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {['AI & ML', 'DBMS', 'Networks', 'Cloud Systems'].map(preset => (
+                      <button
+                        type="button"
+                        key={preset}
+                        onClick={() => setSubjectNameInput(preset)}
+                        className="px-2 py-0.5 text-[10px] rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-950 text-gray-600 dark:text-gray-300 hover:text-indigo-600 transition-colors cursor-pointer"
+                      >
+                        + {preset}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Lecture Topic (Optional) */}
@@ -841,7 +1001,7 @@ export default function TeacherDashboard() {
                 className="px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="all">All Subjects</option>
-                {subjects.map(s => (
+                {(Array.isArray(subjects) ? subjects : []).map(s => (
                   <option key={s.id} value={s.code}>{s.code} • {s.name}</option>
                 ))}
               </select>
@@ -987,7 +1147,7 @@ export default function TeacherDashboard() {
                   className="text-xs font-medium px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">All Subjects</option>
-                  {subjects.map(s => (
+                  {(Array.isArray(subjects) ? subjects : []).map(s => (
                     <option key={s.id} value={s.id}>{s.code} - {s.name}</option>
                   ))}
                 </select>

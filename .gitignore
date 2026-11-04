@@ -26,3 +26,5 @@ instance/
 cloudflared.exe
 backend/temp/
 *.log
+
+.vercel

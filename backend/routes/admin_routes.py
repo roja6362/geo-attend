@@ -33,7 +33,8 @@ def get_stats():
         "total_attendance": total_attendance,
         "present": present_count,
         "absent": absent_count,
-        "percentage": round(pct, 2)
+        "percentage": round(pct, 2),
+        "average_attendance_rate": round(pct, 2)
     }), 200
 
 @admin_bp.route('/users', methods=['GET'])
@@ -48,7 +49,11 @@ def get_users():
         "name": u.name,
         "email": u.email,
         "role": u.role,
-        "department": u.department
+        "department": u.department,
+        "usn": u.usn or "N/A",
+        "semester": u.semester,
+        "phone_number": u.phone_number,
+        "face_registered": bool(u.face_encoding)
     } for u in users]), 200
 
 @admin_bp.route('/settings', methods=['GET', 'POST'])

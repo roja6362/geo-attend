@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v2';
+const CACHE_NAME = 'geo-attend-v13-real-admin-stats';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -11,6 +11,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
+            console.log('Purging old cache:', cache);
             return caches.delete(cache);
           }
         })

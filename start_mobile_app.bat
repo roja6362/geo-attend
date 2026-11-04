@@ -19,7 +19,7 @@ timeout /t 3 >nul
 
 echo [3/3] Starting Cloudflare HTTPS Tunnel for Mobile...
 echo (Check the Cloudflare window for your https://*.trycloudflare.com mobile URL)
-start "Geo-Attend Cloudflare Tunnel" cmd /k "cd /d %~dp0 && cloudflared.exe tunnel --protocol http2 --no-tls-verify --url https://localhost:5173"
+start "Geo-Attend Cloudflare Tunnel" cmd /k "cd /d %~dp0 && cloudflared.exe tunnel --url http://localhost:5173"
 
 echo.
 echo ===================================================
