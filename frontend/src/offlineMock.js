@@ -557,12 +557,53 @@ function handleMockRequest(url, method, rawData) {
       attended_classes: 23,
       is_eligible: true,
       is_overall_defaulter: false,
+      overall_classes_needed: 0,
       margin_to_skip: 5,
       subjects: [
-        { id: 1, name: "Artificial Intelligence & ML", code: "CS502", total: 24, attended: 23, percentage: 95.8, status: "Eligible", needed: 0, safe_miss: 5 },
-        { id: 2, name: "Database Management Systems", code: "CS501", total: 22, attended: 20, percentage: 90.9, status: "Eligible", needed: 0, safe_miss: 3 },
-        { id: 3, name: "Computer Networks & Security", code: "CS503", total: 20, attended: 19, percentage: 95.0, status: "Eligible", needed: 0, safe_miss: 4 },
-        { id: 4, name: "Cloud & Distributed Systems", code: "CS504", total: 18, attended: 17, percentage: 94.4, status: "Eligible", needed: 0, safe_miss: 3 }
+        { 
+          id: 1, subject_id: 1, 
+          name: "Artificial Intelligence & ML", subject_name: "Artificial Intelligence & ML", 
+          code: "CS502", subject_code: "CS502", 
+          total: 24, total_classes: 24, 
+          attended: 23, attended_classes: 23, 
+          percentage: 95.8, status: "Eligible", 
+          needed: 0, classes_needed: 0, 
+          safe_miss: 5, safe_miss_allowed: 5, 
+          is_defaulter: false 
+        },
+        { 
+          id: 2, subject_id: 2, 
+          name: "Database Management Systems", subject_name: "Database Management Systems", 
+          code: "CS501", subject_code: "CS501", 
+          total: 22, total_classes: 22, 
+          attended: 20, attended_classes: 20, 
+          percentage: 90.9, status: "Eligible", 
+          needed: 0, classes_needed: 0, 
+          safe_miss: 3, safe_miss_allowed: 3, 
+          is_defaulter: false 
+        },
+        { 
+          id: 3, subject_id: 3, 
+          name: "Computer Networks & Security", subject_name: "Computer Networks & Security", 
+          code: "CS503", subject_code: "CS503", 
+          total: 20, total_classes: 20, 
+          attended: 19, attended_classes: 19, 
+          percentage: 95.0, status: "Eligible", 
+          needed: 0, classes_needed: 0, 
+          safe_miss: 4, safe_miss_allowed: 4, 
+          is_defaulter: false 
+        },
+        { 
+          id: 4, subject_id: 4, 
+          name: "Cloud & Distributed Systems", subject_name: "Cloud & Distributed Systems", 
+          code: "CS504", subject_code: "CS504", 
+          total: 18, total_classes: 18, 
+          attended: 17, attended_classes: 17, 
+          percentage: 94.4, status: "Eligible", 
+          needed: 0, classes_needed: 0, 
+          safe_miss: 3, safe_miss_allowed: 3, 
+          is_defaulter: false 
+        }
       ]
     };
   }
