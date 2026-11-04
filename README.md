@@ -138,16 +138,6 @@ The backend API will run at `http://localhost:5000`.
 
 ---
 
-## 🔐 Default Demo Accounts
-
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Super Admin** | `admin@college.edu` | `admin123` |
-| **Teacher** | `teacher@college.edu` | `teacher123` |
-| **Student (M Roja)** | `thimmareddym4@gmail.com` | `password123` |
-| **Student (Rahul Sharma)** | `student@college.edu` | `student123` |
-
----
-
 ## 📄 License
 This project is licensed under the MIT License.
+
