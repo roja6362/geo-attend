@@ -735,7 +735,7 @@ export default function AdminDashboard() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
-              Dashboard Overview
+              Overview
             </button>
             <button
               onClick={() => setActiveTab('student-registration')}
@@ -756,7 +756,7 @@ export default function AdminDashboard() {
               }`}
             >
               <FileSpreadsheet className="h-4 w-4" />
-              Bulk CSV Import
+              Import CSV
             </button>
             <button
               onClick={() => setActiveTab('audit-logs')}
@@ -767,7 +767,7 @@ export default function AdminDashboard() {
               }`}
             >
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              Security Audit & Anomaly Radar
+              Audit & Security
             </button>
           </div>
         </div>

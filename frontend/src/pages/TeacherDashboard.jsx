@@ -626,7 +626,7 @@ export default function TeacherDashboard() {
               }`}
             >
               <Radio className="h-4 w-4" />
-              <span>Live Lecture & Rollcall</span>
+              <span>Live Session</span>
             </button>
 
             <button
@@ -638,7 +638,7 @@ export default function TeacherDashboard() {
               }`}
             >
               <AlertTriangle className="h-4 w-4 text-amber-400" />
-              <span>75% Shortage Tracker & CSV Export</span>
+              <span>Attendance Tracker</span>
               {shortageData && shortageData.defaulters_count > 0 && (
                 <span className="px-1.5 py-0.5 text-[10px] bg-red-500 text-white font-bold rounded-full">
                   {shortageData.defaulters_count}
@@ -655,7 +655,7 @@ export default function TeacherDashboard() {
               }`}
             >
               <FileSpreadsheet className="h-4 w-4" />
-              <span>Leave & OD Approvals</span>
+              <span>Leave Approvals</span>
               {leaveRequests.filter(r => r.status === 'PENDING').length > 0 && (
                 <span className="px-1.5 py-0.5 text-[10px] bg-amber-500 text-white font-bold rounded-full">
                   {leaveRequests.filter(r => r.status === 'PENDING').length}
