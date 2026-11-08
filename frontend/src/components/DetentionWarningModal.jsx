@@ -182,3 +182,4 @@ export default function DetentionWarningModal({ isOpen, onClose, student }) {
     </div>
   );
 }
+

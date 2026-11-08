@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v18-enterprise-suite';
+const CACHE_NAME = 'geo-attend-v19-teacher-controlled-sessions';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

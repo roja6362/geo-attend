@@ -29,7 +29,6 @@ import {
   Sparkles,
   AlertTriangle,
   Zap,
-  Play,
   Check,
   BookOpen,
   FileSpreadsheet,
@@ -450,30 +449,6 @@ export default function StudentDashboard() {
     }
   };
 
-  const handleQuickStartDemoSession = () => {
-    const demoSession = {
-      id: Date.now(),
-      subject_id: 1,
-      subject_name: "Artificial Intelligence & ML",
-      subject_code: "CS502",
-      title: "Artificial Intelligence & ML",
-      room: "Room 302",
-      teacher_name: "Prof. Ramesh Kumar",
-      status: "ACTIVE",
-      is_active: true,
-      start_time: new Date().toISOString(),
-      present_count: 0,
-      total_marked: 0
-    };
-    try {
-      localStorage.setItem('geoattend_active_session', JSON.stringify(demoSession));
-      localStorage.setItem('geoattend_active_rollcall', JSON.stringify([]));
-    } catch(e) {}
-    setActiveSessions([demoSession]);
-    setSelectedSession(demoSession);
-    broadcastEvent('START_SESSION', { session: demoSession });
-  };
-
   useEffect(() => {
     getLocation();
     fetchGeofenceSettings();
@@ -492,6 +467,11 @@ export default function StudentDashboard() {
     // Multi-device realtime synchronization listener
     const unsubscribe = onSyncEvent((event) => {
       if (event.action === 'START_SESSION' || event.action === 'END_SESSION' || event.action === 'ROLLCALL_UPDATED') {
+        if (event.action === 'END_SESSION') {
+          setActiveSessions([]);
+          setSelectedSession(null);
+          setLiveClassToast(null);
+        }
         fetchActiveSessions();
         if (event.action === 'START_SESSION' && event.payload?.session) {
           setLiveClassToast(event.payload.session);
@@ -537,10 +517,10 @@ export default function StudentDashboard() {
       setSelectedSession(currentActiveSession);
     }
 
-    if (!currentActiveSession) {
-      // Auto-unlock demo session if teacher has not opened one yet
-      handleQuickStartDemoSession();
-      setMessage('⚡ Class session automatically activated! Marking your attendance now...');
+    if (!currentActiveSession || activeSessions.length === 0) {
+      setStatus('error');
+      setMessage('Attendance Window Locked: Only course professors can open and close attendance sessions. Please wait for your teacher to start the lecture.');
+      return;
     }
 
     if (checkIsMarkedForUser(currentActiveSession, user)) {
@@ -915,14 +895,10 @@ export default function StudentDashboard() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleQuickStartDemoSession}
-                    className="py-2 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer whitespace-nowrap"
-                  >
-                    <Play className="h-3.5 w-3.5 fill-current" />
-                    <span>⚡ Open Live Class for Demo (AI & ML)</span>
-                  </button>
+                  <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-semibold border border-amber-200/60 dark:border-amber-800/60 whitespace-nowrap">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                    <span>Waiting for Professor to Start Class</span>
+                  </div>
                 </div>
               ) : (
                 /* ACTIVE LECTURE AVAILABLE */
