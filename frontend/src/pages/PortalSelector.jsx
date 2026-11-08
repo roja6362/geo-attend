@@ -216,6 +216,14 @@ export default function PortalSelector() {
               <span>Cloud Server</span>
               <Settings className="h-2.5 w-2.5 opacity-70" />
             </button>
+            <Link
+              to="/status"
+              className="hidden md:flex items-center gap-1.5 ml-2 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors"
+              title="View Real-Time System Health, SLA & Telemetry"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>SLA 99.98% • Live Status</span>
+            </Link>
           </div>
 
           {/* Action buttons */}

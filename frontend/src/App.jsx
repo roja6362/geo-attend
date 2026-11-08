@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import BlockchainExplorer from './pages/BlockchainExplorer';
 import Register from './pages/Register';
+import SystemStatus from './pages/SystemStatus';
 import { API_BASE } from './config';
 
 // Global Error Boundary to prevent blank/white screen crashes
@@ -167,6 +168,9 @@ function App() {
 
             {/* Blockchain Ledger Explorer */}
             <Route path="/blockchain" element={<BlockchainExplorer />} />
+
+            {/* Enterprise System Status & Telemetry */}
+            <Route path="/status" element={<SystemStatus />} />
             
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />

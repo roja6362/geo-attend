@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v17-pwa-icon-refresh';
+const CACHE_NAME = 'geo-attend-v18-enterprise-suite';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

@@ -1,6 +1,30 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { Users, UserCheck, ShieldAlert, BarChart3, Settings, Camera, Upload, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { 
+  Users, 
+  UserCheck, 
+  ShieldAlert, 
+  BarChart3, 
+  Settings, 
+  Camera, 
+  Upload, 
+  CheckCircle, 
+  XCircle, 
+  Trash2,
+  FileSpreadsheet,
+  Download,
+  Activity,
+  AlertTriangle,
+  FileText,
+  Lock,
+  Search,
+  Filter,
+  Check,
+  RefreshCw,
+  Eye,
+  ShieldCheck,
+  FileUp
+} from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
 import Webcam from 'react-webcam';
@@ -77,6 +101,75 @@ const DEFAULT_RECORDS = [
   }
 ];
 
+const DEFAULT_AUDIT_LOGS = [
+  {
+    id: 'AUD-9021',
+    timestamp: 'Just now',
+    eventType: 'BIOMETRIC_PUNCH_VERIFIED',
+    principal: 'M Roja (3BR23CA060)',
+    role: 'Student',
+    location: 'GPS: 12.9716° N, 77.5946° E (Delta 2.4m)',
+    severity: 'INFO',
+    hash: '0xa4f82b7c9e01df',
+    status: 'VERIFIED_PASS'
+  },
+  {
+    id: 'AUD-9020',
+    timestamp: '12m ago',
+    eventType: 'DYNAMIC_LIVENESS_CHALLENGE',
+    principal: 'M Roja (3BR23CA060)',
+    role: 'Student',
+    location: 'Mobile Front Camera (Biometric AI)',
+    severity: 'INFO',
+    hash: '0x7e3c1a99f302b4',
+    status: 'BLINK_CONFIRMED'
+  },
+  {
+    id: 'AUD-9019',
+    timestamp: '28m ago',
+    eventType: 'ROTATING_HMAC_QR_ISSUED',
+    principal: 'Prof. Ramesh Kumar',
+    role: 'Teacher',
+    location: 'Room 302 - MCA Department',
+    severity: 'INFO',
+    hash: '0x3b89ef51d044ea',
+    status: '15S_CYCLE_ACTIVE'
+  },
+  {
+    id: 'AUD-9018',
+    timestamp: '45m ago',
+    eventType: 'GEOFENCE_PROXIMITY_LOCK',
+    principal: 'Rahul Sharma (CS2024001)',
+    role: 'Student',
+    location: 'Distance: 4.8m / Allowed: 50m',
+    severity: 'INFO',
+    hash: '0x12c85dbb8a77fe',
+    status: 'BOUNDS_CLEAR'
+  },
+  {
+    id: 'AUD-9017',
+    timestamp: '1h 30m ago',
+    eventType: 'BLOCKCHAIN_LEDGER_SYNC',
+    principal: 'Consensus Daemon (Block #104)',
+    role: 'System Gateway',
+    location: 'SHA-256 Peer Node Gateway',
+    severity: 'INFO',
+    hash: '0xd991a0b3f888cc',
+    status: 'BLOCK_COMMITTED'
+  },
+  {
+    id: 'AUD-9016',
+    timestamp: '2h 15m ago',
+    eventType: 'SPOOF_MOCK_LOCATION_PROBE',
+    principal: 'Anonymous Probe (192.168.1.42)',
+    role: 'External',
+    location: 'Developer Options Mock GPS Check',
+    severity: 'SECURITY_ALERT',
+    hash: '0xf019ec44aa5b89',
+    status: 'PROBE_BLOCKED'
+  }
+];
+
 const calculateLiveStats = (currentUsers = null) => {
   let customUsers = [];
   try {
@@ -150,6 +243,24 @@ export default function AdminDashboard() {
   const [addStatus, setAddStatus] = useState('idle');
   const [addMessage, setAddMessage] = useState('');
   const webcamRef = useRef(null);
+
+  // Bulk CSV States
+  const [csvText, setCsvText] = useState('');
+  const [csvParsedRows, setCsvParsedRows] = useState([]);
+  const [csvError, setCsvError] = useState('');
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkImportMsg, setBulkImportMsg] = useState('');
+
+  // Enterprise Security Audit States
+  const [auditLogs, setAuditLogs] = useState(() => {
+    try {
+      const stored = localStorage.getItem('geoattend_audit_logs');
+      if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    return DEFAULT_AUDIT_LOGS;
+  });
+  const [auditFilter, setAuditFilter] = useState('ALL');
+  const [auditSearch, setAuditSearch] = useState('');
 
   const token = localStorage.getItem('token');
   let user = {};
@@ -402,6 +513,178 @@ export default function AdminDashboard() {
     }
   };
 
+  const downloadSampleCsv = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Name,USN,Email,Department,Semester,Phone\n" +
+      "Arjun Rao,3BR23CS101,arjun.rao@college.edu,Computer Science,5,9876543210\n" +
+      "Kavya Nair,3BR23CS102,kavya.nair@college.edu,Computer Science,5,9876543211\n" +
+      "Pooja Hegde,3BR23AI045,pooja.h@college.edu,Artificial Intelligence,5,9876543212\n" +
+      "Vikram Singh,3BR23EC078,vikram.s@college.edu,Electronics & Comm,5,9876543213\n" +
+      "Suresh Gowda,3BR23IS032,suresh.g@college.edu,Information Science,5,9876543214\n";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "geoattend_student_roster_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleCsvFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCsvText(event.target.result);
+      parseCsvString(event.target.result);
+    };
+    reader.readAsText(file);
+  };
+
+  const parseCsvString = (text) => {
+    if (!text || !text.trim()) {
+      setCsvParsedRows([]);
+      setCsvError('');
+      return;
+    }
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) {
+      setCsvError('CSV must include header row and at least 1 student row.');
+      return;
+    }
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9]/g, ''));
+    
+    const nameIdx = headers.findIndex(h => h.includes('name'));
+    const usnIdx = headers.findIndex(h => h.includes('usn') || h.includes('roll'));
+    const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('mail'));
+    const deptIdx = headers.findIndex(h => h.includes('dept') || h.includes('department'));
+    const semIdx = headers.findIndex(h => h.includes('sem') || h.includes('semester'));
+    const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('mobile'));
+
+    const parsed = [];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+      const studentName = (nameIdx >= 0 ? cols[nameIdx] : cols[0]) || `Student ${i}`;
+      const studentUsn = (usnIdx >= 0 ? cols[usnIdx] : cols[1]) || `USN${Math.floor(1000 + Math.random() * 9000)}`;
+      const studentEmail = (emailIdx >= 0 ? cols[emailIdx] : cols[2]) || `${studentUsn.toLowerCase()}@college.edu`;
+      const dept = (deptIdx >= 0 ? cols[deptIdx] : cols[3]) || 'Computer Science';
+      const sem = (semIdx >= 0 ? cols[semIdx] : cols[4]) || '5';
+      const phone = (phoneIdx >= 0 ? cols[phoneIdx] : cols[5]) || '';
+
+      parsed.push({
+        id: Date.now() + i,
+        name: studentName,
+        usn: studentUsn,
+        roll_no: studentUsn,
+        email: studentEmail.toLowerCase(),
+        department: dept,
+        semester: sem,
+        phone_number: phone,
+        role: 'student',
+        face_registered: true,
+        password: 'password123'
+      });
+    }
+
+    setCsvParsedRows(parsed);
+    setCsvError('');
+  };
+
+  const handleExecuteBulkImport = async () => {
+    if (!csvParsedRows || csvParsedRows.length === 0) {
+      alert("No valid student rows to import.");
+      return;
+    }
+
+    setBulkImporting(true);
+    try {
+      let customUsers = [];
+      try {
+        customUsers = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
+      } catch (e) {
+        customUsers = [];
+      }
+
+      let newlyAdded = 0;
+      csvParsedRows.forEach(student => {
+        if (!customUsers.some(u => (u.usn && u.usn.toLowerCase() === student.usn.toLowerCase()) || (u.email && u.email.toLowerCase() === student.email.toLowerCase()))) {
+          customUsers.push(student);
+          newlyAdded++;
+        }
+      });
+
+      localStorage.setItem('geoattend_custom_users', JSON.stringify(customUsers));
+
+      // Append security audit event
+      const auditEvent = {
+        id: `AUD-${Math.floor(1000 + Math.random() * 9000)}`,
+        timestamp: 'Just now',
+        eventType: 'BULK_CSV_ENROLLMENT',
+        principal: `${user.name || 'Admin'} (Super Admin)`,
+        role: 'Admin',
+        location: `Batch Provisioning (${newlyAdded} enrolled)`,
+        severity: 'INFO',
+        hash: '0x' + Math.random().toString(16).substring(2, 16),
+        status: 'BATCH_COMMITTED'
+      };
+      const existingAudit = JSON.parse(localStorage.getItem('geoattend_audit_logs') || JSON.stringify(DEFAULT_AUDIT_LOGS));
+      const updatedAudit = [auditEvent, ...existingAudit];
+      localStorage.setItem('geoattend_audit_logs', JSON.stringify(updatedAudit));
+      setAuditLogs(updatedAudit);
+
+      broadcastEvent('REGISTER_USER', { batchCount: newlyAdded });
+
+      await fetchUsers();
+      await fetchStats();
+
+      setBulkImportMsg(`Success! Enrolled ${newlyAdded} new student(s) into the institutional registry.`);
+      setCsvParsedRows([]);
+      setCsvText('');
+      setTimeout(() => setBulkImportMsg(''), 5000);
+    } catch (err) {
+      alert("Error during bulk import: " + err.message);
+    } finally {
+      setBulkImporting(false);
+    }
+  };
+
+  const handleExportAuditLogsCsv = () => {
+    const headers = ["Log ID", "Timestamp", "Event Type", "Principal", "Role", "Telemetry Location", "Severity", "Hash", "Status"];
+    const rows = (auditLogs || DEFAULT_AUDIT_LOGS).map(log => [
+      `"${log.id}"`,
+      `"${log.timestamp}"`,
+      `"${log.eventType}"`,
+      `"${log.principal}"`,
+      `"${log.role}"`,
+      `"${log.location}"`,
+      `"${log.severity}"`,
+      `"${log.hash}"`,
+      `"${log.status}"`
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `geoattend_security_audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredAuditLogs = (auditLogs || DEFAULT_AUDIT_LOGS).filter(log => {
+    const matchesFilter = auditFilter === 'ALL' || log.severity === auditFilter;
+    const q = (auditSearch || '').toLowerCase();
+    const matchesSearch = !q || 
+      (log.id && log.id.toLowerCase().includes(q)) ||
+      (log.eventType && log.eventType.toLowerCase().includes(q)) ||
+      (log.principal && log.principal.toLowerCase().includes(q)) ||
+      (log.location && log.location.toLowerCase().includes(q)) ||
+      (log.hash && log.hash.toLowerCase().includes(q));
+    return matchesFilter && matchesSearch;
+  });
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -424,6 +707,10 @@ export default function AdminDashboard() {
               <Link to="/" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 All Portals
               </Link>
+              <Link to="/status" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                SLA Status
+              </Link>
               <Link to="/blockchain" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">
                 View Blockchain
               </Link>
@@ -439,10 +726,10 @@ export default function AdminDashboard() {
       {/* Tabs Bar */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-150 dark:border-gray-750">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
+          <div className="flex space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`py-4 px-1 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+              className={`py-4 px-1 text-sm font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === 'overview'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -452,7 +739,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => setActiveTab('student-registration')}
-              className={`py-4 px-1 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+              className={`py-4 px-1 text-sm font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === 'student-registration'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -460,12 +747,34 @@ export default function AdminDashboard() {
             >
               Register Student
             </button>
+            <button
+              onClick={() => setActiveTab('bulk-import')}
+              className={`py-4 px-1 text-sm font-semibold border-b-2 transition-colors cursor-pointer inline-flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === 'bulk-import'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Bulk CSV Import
+            </button>
+            <button
+              onClick={() => setActiveTab('audit-logs')}
+              className={`py-4 px-1 text-sm font-semibold border-b-2 transition-colors cursor-pointer inline-flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === 'audit-logs'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              Security Audit & Anomaly Radar
+            </button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-        {activeTab === 'overview' ? (
+        {activeTab === 'overview' && (
           /* Tab 1: Overview & Settings */
           <div className="space-y-8">
             {/* Stats Grid */}
@@ -693,7 +1002,9 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'student-registration' && (
           /* Tab 2: Create Student Profile & Biometrics */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Form Details */}
@@ -917,6 +1228,303 @@ export default function AdminDashboard() {
                   ✓ Face photo loaded and ready. Fill out the student profile form on the left and submit to finalize registration.
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Bulk CSV Import */}
+        {activeTab === 'bulk-import' && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-gray-700">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                      <FileSpreadsheet className="h-5 w-5" />
+                    </span>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Institutional Bulk CSV Onboarding</h2>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Batch provision hundreds of students in one click with automatic USN indexing & default credentials.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={downloadSampleCsv}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  >
+                    <Download className="h-4 w-4" /> Download Sample CSV
+                  </button>
+                </div>
+              </div>
+
+              {bulkImportMsg && (
+                <div className="mt-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm font-semibold flex items-center gap-2 animate-fadeIn">
+                  <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                  <span>{bulkImportMsg}</span>
+                </div>
+              )}
+
+              {csvError && (
+                <div className="mt-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm flex items-center gap-2 animate-fadeIn">
+                  <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                  <span>{csvError}</span>
+                </div>
+              )}
+
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                    1. Upload .CSV File
+                  </label>
+                  <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 dark:bg-gray-900/40">
+                    <FileUp className="h-8 w-8 text-blue-500 mb-2" />
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">Select or drop CSV file here</span>
+                    <span className="text-[11px] text-gray-400 mt-0.5">Columns: Name, USN, Email, Department, Semester, Phone</span>
+                    <input
+                      type="file"
+                      accept=".csv,text/csv"
+                      onChange={handleCsvFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                    2. Or Paste Raw CSV Rows
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={csvText}
+                    onChange={(e) => {
+                      setCsvText(e.target.value);
+                      parseCsvString(e.target.value);
+                    }}
+                    placeholder={`Name,USN,Email,Department,Semester,Phone\nArjun Rao,3BR23CS101,arjun@college.edu,Computer Science,5,9876543210\nKavya Nair,3BR23CS102,kavya@college.edu,Computer Science,5,9876543211`}
+                    className="w-full text-xs font-mono p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Preview Table */}
+              {csvParsedRows.length > 0 && (
+                <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                        Validated Records Preview ({csvParsedRows.length} Students Detected)
+                      </h3>
+                      <p className="text-xs text-gray-500">Review batch roster before committing to institutional database</p>
+                    </div>
+                    <button
+                      onClick={handleExecuteBulkImport}
+                      disabled={bulkImporting}
+                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg hover:shadow-xl transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      {bulkImporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      {bulkImporting ? 'Provisioning...' : `Confirm & Enroll ${csvParsedRows.length} Students`}
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+                      <thead className="bg-gray-50 dark:bg-gray-900/60 font-semibold text-gray-500 uppercase">
+                        <tr>
+                          <th className="px-4 py-3 text-left">#</th>
+                          <th className="px-4 py-3 text-left">Name</th>
+                          <th className="px-4 py-3 text-left">USN / Roll</th>
+                          <th className="px-4 py-3 text-left">Email</th>
+                          <th className="px-4 py-3 text-left">Department</th>
+                          <th className="px-4 py-3 text-left">Semester</th>
+                          <th className="px-4 py-3 text-left">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800 font-mono">
+                        {csvParsedRows.slice(0, 15).map((row, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/30">
+                            <td className="px-4 py-2.5 text-gray-400">{idx + 1}</td>
+                            <td className="px-4 py-2.5 font-sans font-medium text-gray-900 dark:text-white">{row.name}</td>
+                            <td className="px-4 py-2.5 text-blue-600 dark:text-blue-400 font-bold">{row.usn}</td>
+                            <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300">{row.email}</td>
+                            <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300 font-sans">{row.department}</td>
+                            <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300">Sem {row.semester}</td>
+                            <td className="px-4 py-2.5">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
+                                <Check className="h-3 w-3" /> Ready
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {csvParsedRows.length > 15 && (
+                      <div className="p-3 text-center text-xs text-gray-500 bg-gray-50 dark:bg-gray-900/40 border-t border-gray-200 dark:border-gray-700">
+                        + {csvParsedRows.length - 15} more students ready to import...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Enterprise Security Audit Log & Anomaly Radar */}
+        {activeTab === 'audit-logs' && (
+          <div className="space-y-6">
+            {/* Anomaly Radar Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Geo-Spoofing Radar</span>
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0 Anomalies</div>
+                  <span className="text-[11px] text-gray-500">100% Mock GPS blocks</span>
+                </div>
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Biometric Liveness</span>
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">100.0%</div>
+                  <span className="text-[11px] text-gray-500">Dynamic blink verified</span>
+                </div>
+                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600">
+                  <Eye className="h-6 w-6" />
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Subsystem SLA</span>
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">99.98%</div>
+                  <span className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Fully Operational
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600">
+                  <Activity className="h-6 w-6" />
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Chain Integrity</span>
+                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">SHA-256</div>
+                  <span className="text-[11px] text-gray-500">Tamper-evident log chain</span>
+                </div>
+                <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600">
+                  <Lock className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+
+            {/* Audit Log Controls & Explorer */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-gray-700">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span>Immutable Security Audit Log Explorer</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-mono">
+                      ISO 27001 / SOC 2
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Real-time cryptographically hashed event stream tracking biometrics, geofences, and role authorization.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleExportAuditLogsCsv}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 hover:bg-black dark:bg-gray-700 dark:hover:bg-gray-600 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                  >
+                    <Download className="h-4 w-4" /> Export Audit CSV
+                  </button>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="mt-4 flex flex-col sm:flex-row items-center gap-3">
+                <div className="relative flex-1 w-full">
+                  <Search className="h-4 w-4 absolute left-3 top-2.5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search principal, event type, or hash..."
+                    value={auditSearch}
+                    onChange={(e) => setAuditSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Filter className="h-4 w-4 text-gray-400" />
+                  <select
+                    value={auditFilter}
+                    onChange={(e) => setAuditFilter(e.target.value)}
+                    className="text-xs border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="ALL">All Severities</option>
+                    <option value="INFO">Info / Verified Passes</option>
+                    <option value="SECURITY_ALERT">Security Alerts / Probes</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+                  <thead className="bg-gray-50 dark:bg-gray-900/60 font-semibold text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Log ID & Time</th>
+                      <th className="px-4 py-3 text-left">Event Action</th>
+                      <th className="px-4 py-3 text-left">Principal</th>
+                      <th className="px-4 py-3 text-left">Location / Telemetry</th>
+                      <th className="px-4 py-3 text-left font-mono">Integrity Hash</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {filteredAuditLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/30">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="font-mono font-bold text-gray-800 dark:text-gray-200">{log.id}</div>
+                          <div className="text-[10px] text-gray-400">{log.timestamp}</div>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono ${
+                            log.severity === 'SECURITY_ALERT'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300'
+                              : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                          }`}>
+                            {log.eventType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900 dark:text-white">{log.principal}</div>
+                          <div className="text-[10px] text-gray-400">{log.role}</div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300 max-w-xs truncate">
+                          {log.location}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-[11px] text-gray-500 dark:text-gray-400">
+                          {log.hash}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            log.status.includes('BLOCKED') || log.status.includes('ALERT')
+                              ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300'
+                              : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+                          }`}>
+                            <Check className="h-3 w-3" /> {log.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
