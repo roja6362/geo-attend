@@ -70,6 +70,7 @@ export default function StudentDashboard() {
   const [geofence, setGeofence] = useState(null);
   const [distanceFromCenter, setDistanceFromCenter] = useState(null);
   const [isInsideGeofence, setIsInsideGeofence] = useState(null);
+  const [gpsError, setGpsError] = useState(null);
   const [showMap, setShowMap] = useState(false);
 
   // Dynamic Liveness & Anti-Spoofing States (Speed-optimized: Eye-blink only)
@@ -296,13 +297,12 @@ export default function StudentDashboard() {
 
   const getLocation = () => {
     if (!navigator.geolocation) {
-      const coords = { lat: 15.16621, lon: 76.85044 };
-      setLocation(coords);
-      setDistanceFromCenter(8);
-      setIsInsideGeofence(true);
+      setGpsError('Geolocation is not supported by your browser.');
+      setIsInsideGeofence(false);
       return;
     }
     
+    setGpsError(null);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const coords = {
@@ -310,51 +310,63 @@ export default function StudentDashboard() {
           lon: position.coords.longitude
         };
         setLocation(coords);
+        setGpsError(null);
 
-        const gLat = parseFloat(geofence?.latitude || geofence?.DEFAULT_LATITUDE || 15.16621);
-        const gLon = parseFloat(geofence?.longitude || geofence?.DEFAULT_LONGITUDE || 76.85044);
-        const gRad = parseFloat(geofence?.radius || geofence?.DEFAULT_RADIUS_METERS || 50000000);
-        const dist = computeDistance(coords.lat, coords.lon, gLat, gLon);
-        const safeDist = isNaN(dist) ? 8 : dist;
-        setDistanceFromCenter(safeDist);
-        setIsInsideGeofence(true);
+        const targetLat = parseFloat(geofence?.latitude || 15.167692);
+        const targetLon = parseFloat(geofence?.longitude || 76.850600);
+        const targetRad = parseFloat(geofence?.radius || 100);
+
+        const dist = computeDistance(coords.lat, coords.lon, targetLat, targetLon);
+        setDistanceFromCenter(dist);
+        setIsInsideGeofence(dist <= targetRad);
       },
       (error) => {
-        console.warn('Location error, using campus coordinates:', error);
-        const coords = { lat: 15.16621, lon: 76.85044 };
-        setLocation(coords);
-        setDistanceFromCenter(8);
-        setIsInsideGeofence(true);
+        console.warn('Geolocation error:', error);
+        setGpsError('GPS permission denied or unavailable. Please enable Location in browser.');
+        setIsInsideGeofence(false);
       },
-      { enableHighAccuracy: true, timeout: 5000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
   const fetchGeofenceSettings = async () => {
+    let localData = null;
+    try {
+      const stored = localStorage.getItem('geoattend_geofence_settings');
+      if (stored) localData = JSON.parse(stored);
+    } catch (e) {}
+
+    let normalized = {
+      name: localData?.GEOFENCE_NAME || localData?.name || 'Room 302 - MCA Department',
+      latitude: parseFloat(localData?.DEFAULT_LATITUDE || localData?.latitude || 15.167692),
+      longitude: parseFloat(localData?.DEFAULT_LONGITUDE || localData?.longitude || 76.850600),
+      radius: parseFloat(localData?.DEFAULT_RADIUS_METERS || localData?.radius || 100)
+    };
+
     try {
       const res = await axios.get(`${API_URL}/attendance/geofence-settings`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = res.data || {};
-      const normalized = {
-        name: data.GEOFENCE_NAME || 'Campus Classroom & Building',
-        latitude: parseFloat(data.latitude || data.DEFAULT_LATITUDE || 15.16621),
-        longitude: parseFloat(data.longitude || data.DEFAULT_LONGITUDE || 76.85044),
-        radius: parseFloat(data.radius || data.DEFAULT_RADIUS_METERS || 50000000)
-      };
-      setGeofence(normalized);
-      setDistanceFromCenter(8);
-      setIsInsideGeofence(true);
+      if (data.latitude && data.longitude) {
+        normalized = {
+          name: data.name || data.GEOFENCE_NAME || 'Room 302 - MCA Department',
+          latitude: parseFloat(data.latitude || 15.167692),
+          longitude: parseFloat(data.longitude || 76.850600),
+          radius: parseFloat(data.radius || 100)
+        };
+        localStorage.setItem('geoattend_geofence_settings', JSON.stringify({
+          GEOFENCE_NAME: normalized.name,
+          DEFAULT_LATITUDE: normalized.latitude,
+          DEFAULT_LONGITUDE: normalized.longitude,
+          DEFAULT_RADIUS_METERS: normalized.radius
+        }));
+      }
     } catch (err) {
-      setGeofence({
-        name: 'Campus Classroom & Building',
-        latitude: 15.16621,
-        longitude: 76.85044,
-        radius: 50000000
-      });
-      setDistanceFromCenter(8);
-      setIsInsideGeofence(true);
+      console.log('Using local geofence settings');
     }
+
+    setGeofence(normalized);
   };
 
   const fetchHistory = async () => {
@@ -461,6 +473,9 @@ export default function StudentDashboard() {
       if (e.key === 'geoattend_active_session' || e.key === 'geoattend_active_rollcall') {
         fetchActiveSessions();
       }
+      if (e.key === 'geoattend_geofence_settings') {
+        fetchGeofenceSettings();
+      }
     };
     window.addEventListener('storage', onStorage);
 
@@ -478,6 +493,9 @@ export default function StudentDashboard() {
           playSuccessChime();
         }
       }
+      if (event.action === 'GEOFENCE_UPDATED') {
+        fetchGeofenceSettings();
+      }
     });
 
     return () => {
@@ -490,13 +508,12 @@ export default function StudentDashboard() {
   // Update distance whenever location or geofence changes
   useEffect(() => {
     if (location && geofence) {
-      const gLat = parseFloat(geofence.latitude || geofence.DEFAULT_LATITUDE || 15.16621);
-      const gLon = parseFloat(geofence.longitude || geofence.DEFAULT_LONGITUDE || 76.85044);
-      const gRad = parseFloat(geofence.radius || geofence.DEFAULT_RADIUS_METERS || 50000000);
-      const dist = computeDistance(location.lat, location.lon, gLat, gLon);
-      const safeDist = isNaN(dist) ? 8 : dist;
-      setDistanceFromCenter(safeDist);
-      setIsInsideGeofence(true);
+      const targetLat = parseFloat(geofence.latitude || 15.167692);
+      const targetLon = parseFloat(geofence.longitude || 76.850600);
+      const targetRad = parseFloat(geofence.radius || 100);
+      const dist = computeDistance(location.lat, location.lon, targetLat, targetLon);
+      setDistanceFromCenter(dist);
+      setIsInsideGeofence(dist <= targetRad);
     }
   }, [location, geofence]);
 
@@ -509,8 +526,6 @@ export default function StudentDashboard() {
 
   // Dynamic Liveness & Anti-Spoofing Attendance Punch Handler
   const startLivenessAndPunch = async () => {
-    const punchLocation = location || { lat: 15.16621, lon: 76.85044 };
-
     let currentActiveSession = selectedSession;
     if (!currentActiveSession && activeSessions.length > 0) {
       currentActiveSession = activeSessions[0];
@@ -529,11 +544,76 @@ export default function StudentDashboard() {
       return;
     }
 
-    // 1-Tap Instant Biometric Check-in (Zero delay)
+    // 1. STRICT GEOFENCE VERIFICATION
+    if (!location) {
+      setStatus('error');
+      setMessage('GPS Location Required: Please enable location services on your device and click "Refresh" to verify classroom perimeter.');
+      getLocation();
+      return;
+    }
+
+    const targetLat = parseFloat(geofence?.latitude || 15.167692);
+    const targetLon = parseFloat(geofence?.longitude || 76.850600);
+    const targetRad = parseFloat(geofence?.radius || 100);
+    const currentDist = computeDistance(location.lat, location.lon, targetLat, targetLon);
+    const isInside = currentDist <= targetRad;
+
+    setDistanceFromCenter(currentDist);
+    setIsInsideGeofence(isInside);
+
+    if (!isInside) {
+      const distText = currentDist >= 1000 
+        ? `${(currentDist / 1000).toFixed(2)} km` 
+        : `${Math.round(currentDist)} meters`;
+
+      setStatus('error');
+      setMessage(`Attendance Denied: Outside Classroom Geofence! You are ${distText} away (allowed perimeter is ${targetRad}m). You must be inside the classroom to mark attendance.`);
+
+      const rejectedRecord = {
+        id: Date.now(),
+        student_id: user.id || 13,
+        student_name: user.name || "M Roja",
+        roll_no: user.usn || user.roll_no || "3BR23CA060",
+        usn: user.usn || user.roll_no || "3BR23CA060",
+        department: user.department || "Computer Science (AI & ML)",
+        status: "REJECTED",
+        final_status: "REJECTED",
+        face_verified: false,
+        face_match: false,
+        geo_verified: false,
+        inside_geofence: false,
+        distance: currentDist,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: "Today",
+        subject_name: currentActiveSession?.subject_name || 'Lecture',
+        rejection_reason: `Outside geofence (${distText} away)`
+      };
+
+      try {
+        const hist = JSON.parse(localStorage.getItem('geoattend_mock_history') || '[]');
+        hist.unshift(rejectedRecord);
+        localStorage.setItem('geoattend_mock_history', JSON.stringify(hist));
+        setHistory(prev => [rejectedRecord, ...prev]);
+      } catch (e) {}
+
+      setDetails({
+        inside_geofence: false,
+        distance: currentDist,
+        geo_verified: false,
+        face_match: false,
+        liveness_passed: false,
+        liveness_score: 0,
+        message: `Outside classroom geofence (${distText} away)`
+      });
+      return;
+    }
+
+    // 2. Biometric Scan
     const challengeToRun = DYNAMIC_CHALLENGES[0];
     setActiveChallenge(challengeToRun);
     setStatus('capturing');
-    setMessage('Scanning facial biometrics & campus GPS...');
+    setMessage('Scanning facial biometrics & verifying classroom GPS...');
     setDetails(null);
     setLivenessStage('verifying');
 
@@ -545,7 +625,6 @@ export default function StudentDashboard() {
       return;
     }
 
-    // Step 2: Instant Multi-vector AI Verification with Backend
     setStatus('verifying');
 
     try {
@@ -553,8 +632,8 @@ export default function StudentDashboard() {
         image: frame,
         challenge_type: 'instant',
         session_id: currentActiveSession ? currentActiveSession.id : null,
-        latitude: punchLocation.lat,
-        longitude: punchLocation.lon
+        latitude: location.lat,
+        longitude: location.lon
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -580,6 +659,7 @@ export default function StudentDashboard() {
           face_match: true,
           geo_verified: true,
           inside_geofence: true,
+          distance: currentDist,
           liveness_verified: true,
           liveness_passed: true,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -616,6 +696,17 @@ export default function StudentDashboard() {
       }
     } catch (err) {
       console.warn("Backend error during punch, applying standalone fallback:", err);
+
+      // Verify geofence strictly in standalone mode
+      if (!isInside) {
+        const distText = currentDist >= 1000 
+          ? `${(currentDist / 1000).toFixed(2)} km` 
+          : `${Math.round(currentDist)} meters`;
+        setStatus('error');
+        setMessage(`Attendance Denied: Outside Classroom Geofence (${distText} away).`);
+        return;
+      }
+
       const fallbackRecord = {
         final_status: 'PRESENT',
         status: 'PRESENT',
@@ -624,7 +715,7 @@ export default function StudentDashboard() {
         liveness_passed: true,
         liveness_score: 99.2,
         inside_geofence: true,
-        distance: 7.2,
+        distance: currentDist,
         block_id: Math.floor(Math.random() * 200) + 100,
         subject_name: currentActiveSession?.subject_name || 'Artificial Intelligence & ML'
       };
@@ -648,6 +739,7 @@ export default function StudentDashboard() {
         face_match: true,
         geo_verified: true,
         inside_geofence: true,
+        distance: currentDist,
         liveness_verified: true,
         liveness_passed: true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -953,13 +1045,19 @@ export default function StudentDashboard() {
             </div>
 
             {/* GPS & Geofence Status Banner */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className={`rounded-2xl p-4 sm:p-5 shadow-sm border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
+              isInsideGeofence === true
+                ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
+                : isInsideGeofence === false
+                ? 'bg-red-50/60 dark:bg-red-950/20 border-red-200 dark:border-red-900/50'
+                : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'
+            }`}>
               <div className="flex items-center space-x-3.5">
                 <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                   isInsideGeofence === true 
                     ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' 
                     : isInsideGeofence === false 
-                    ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                    ? 'bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
                 }`}>
                   <MapPin className="h-5 w-5" />
@@ -967,16 +1065,36 @@ export default function StudentDashboard() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm text-gray-900 dark:text-white">
-                      {geofence?.name || 'Campus Classroom'}
+                      {geofence?.name || 'Classroom Geofence'}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                      Perimeter Verified ✓
-                    </span>
+                    {isInsideGeofence === true ? (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                        Inside Geofence ✓
+                      </span>
+                    ) : isInsideGeofence === false ? (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300">
+                        Outside Geofence ✗
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-500">
+                        Checking Location...
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {location 
-                      ? 'GPS coordinates verified inside attendance boundary'
-                      : 'Acquiring GPS coordinates...'}
+                    {gpsError ? (
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">{gpsError}</span>
+                    ) : location && distanceFromCenter !== null ? (
+                      isInsideGeofence ? (
+                        <span>GPS Verified inside perimeter • {Math.round(distanceFromCenter)}m from center (Limit: {geofence?.radius || 100}m)</span>
+                      ) : (
+                        <span className="text-red-600 dark:text-red-400 font-medium">
+                          {distanceFromCenter >= 1000 ? `${(distanceFromCenter / 1000).toFixed(1)} km` : `${Math.round(distanceFromCenter)}m`} away from classroom (Allowed: {geofence?.radius || 100}m)
+                        </span>
+                      )
+                    ) : (
+                      'Acquiring high-accuracy GPS coordinates...'
+                    )}
                   </p>
                 </div>
               </div>
@@ -988,7 +1106,7 @@ export default function StudentDashboard() {
                   className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-1.5 transition-colors"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
-                  <span>Refresh</span>
+                  <span>Refresh GPS</span>
                 </button>
                 <button
                   type="button"
@@ -1089,12 +1207,22 @@ export default function StudentDashboard() {
                 <div className="p-4 sm:p-5 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
                   <button
                     onClick={startLivenessAndPunch}
-                    disabled={status === 'capturing' || status === 'verifying' || livenessStage !== 'idle' || activeSessions.length === 0 || checkIsMarkedForUser(selectedSession, user)}
+                    disabled={
+                      status === 'capturing' || 
+                      status === 'verifying' || 
+                      livenessStage !== 'idle' || 
+                      activeSessions.length === 0 || 
+                      checkIsMarkedForUser(selectedSession, user) ||
+                      isInsideGeofence === false ||
+                      !location
+                    }
                     className={`w-full py-3.5 px-4 rounded-xl text-white font-bold text-sm sm:text-base shadow-lg flex items-center justify-center gap-2 transition-all ${
-                      activeSessions.length === 0
+                      activeSessions.length === 0 || checkIsMarkedForUser(selectedSession, user)
                         ? 'bg-gray-500 dark:bg-gray-700 opacity-60 cursor-not-allowed'
-                        : checkIsMarkedForUser(selectedSession, user)
-                        ? 'bg-emerald-800 opacity-70 cursor-not-allowed'
+                        : !location
+                        ? 'bg-amber-600/80 opacity-75 cursor-not-allowed'
+                        : isInsideGeofence === false
+                        ? 'bg-red-600/85 hover:bg-red-600 opacity-90 cursor-not-allowed shadow-red-600/20'
                         : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/30 cursor-pointer'
                     }`}
                   >
@@ -1104,8 +1232,12 @@ export default function StudentDashboard() {
                         ? 'Waiting for Teacher to Open Session'
                         : checkIsMarkedForUser(selectedSession, user)
                         ? 'Attendance Recorded for this Lecture ✓'
+                        : !location
+                        ? 'Acquiring GPS Location...'
+                        : isInsideGeofence === false
+                        ? `Outside Geofence (${distanceFromCenter >= 1000 ? `${(distanceFromCenter / 1000).toFixed(1)}km` : `${Math.round(distanceFromCenter)}m`} away)`
                         : status === 'verifying'
-                        ? 'Verifying...'
+                        ? 'Verifying Face & Location...'
                         : `Punch Attendance (${selectedSession?.subject_code || 'Lecture'})`}
                     </span>
                   </button>

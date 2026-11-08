@@ -218,11 +218,17 @@ const calculateLiveStats = (currentUsers = null) => {
 export default function AdminDashboard() {
   const [stats, setStats] = useState(() => calculateLiveStats());
   const [users, setUsers] = useState([]);
-  const [settings, setSettings] = useState({
-    GEOFENCE_NAME: 'Room 302 - MCA Department',
-    DEFAULT_LATITUDE: '',
-    DEFAULT_LONGITUDE: '',
-    DEFAULT_RADIUS_METERS: ''
+  const [settings, setSettings] = useState(() => {
+    try {
+      const stored = localStorage.getItem('geoattend_geofence_settings');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return {
+      GEOFENCE_NAME: 'Room 302 - MCA Department',
+      DEFAULT_LATITUDE: '15.167692',
+      DEFAULT_LONGITUDE: '76.850600',
+      DEFAULT_RADIUS_METERS: '100'
+    };
   });
   
   // Navigation tab state: 'overview' or 'student-registration'
@@ -354,20 +360,34 @@ export default function AdminDashboard() {
 
   const fetchSettings = async () => {
     try {
+      const stored = localStorage.getItem('geoattend_geofence_settings');
+      if (stored) {
+        setSettings(JSON.parse(stored));
+      }
+    } catch (e) {}
+
+    try {
       const res = await axios.get(`${API_URL}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } });
-      setSettings(res.data);
+      if (res.data && res.data.DEFAULT_LATITUDE) {
+        setSettings(res.data);
+        localStorage.setItem('geoattend_geofence_settings', JSON.stringify(res.data));
+      }
     } catch (err) {
-      console.error(err);
+      console.log('Using local geofence settings');
     }
   };
 
   const updateSettings = async (e) => {
     e.preventDefault();
     try {
+      localStorage.setItem('geoattend_geofence_settings', JSON.stringify(settings));
+      broadcastEvent('GEOFENCE_UPDATED', settings);
       await axios.post(`${API_URL}/admin/settings`, settings, { headers: { Authorization: `Bearer ${token}` } });
-      alert('Settings updated successfully!');
+      alert('Classroom Geofence updated successfully!');
     } catch (err) {
-      alert('Failed to update settings');
+      localStorage.setItem('geoattend_geofence_settings', JSON.stringify(settings));
+      broadcastEvent('GEOFENCE_UPDATED', settings);
+      alert('Classroom Geofence saved locally and broadcast to students!');
     }
   };
 
