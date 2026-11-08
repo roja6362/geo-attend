@@ -192,8 +192,8 @@ export default function Login() {
           <span>Back to All Portals</span>
         </Link>
         <Link to="/" className="inline-flex items-center gap-2 group">
-          <div className="h-7 w-7 rounded-lg bg-slate-900 border border-emerald-500/40 p-0.5 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:border-emerald-400 transition-all">
-            <img src="/favicon.svg" alt="Geo-Attend" className="h-full w-full object-contain" />
+          <div className="h-7 w-7 rounded-lg bg-slate-900 border border-emerald-500/40 p-0.5 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:border-emerald-400 transition-all overflow-hidden">
+            <img src="/app_logo.png" alt="Geo-Attend" className="h-full w-full object-cover rounded" />
           </div>
           <span className="font-bold text-xs bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
             Geo-Attend

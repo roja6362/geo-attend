@@ -28,9 +28,9 @@ export default function Logo({
         
         {/* Render Vector Graphic */}
         <img 
-          src="/favicon.svg" 
+          src="/app_logo.png" 
           alt="Geo-Attend Logo" 
-          className={`relative z-10 w-full h-full object-contain ${animated ? 'animate-pulse' : ''}`}
+          className={`relative z-10 w-full h-full object-contain rounded-xl ${animated ? 'animate-pulse' : ''}`}
         />
       </div>
 
@@ -63,3 +63,4 @@ export default function Logo({
 
   return content;
 }
+

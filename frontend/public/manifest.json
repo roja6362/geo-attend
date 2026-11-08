@@ -11,9 +11,9 @@
   "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/app_logo.png",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

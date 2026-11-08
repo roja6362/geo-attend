@@ -196,8 +196,8 @@ export default function PortalSelector() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-emerald-950 p-1 flex items-center justify-center shadow-lg shadow-emerald-500/25 border border-emerald-500/50 group-hover:border-emerald-400 group-hover:scale-105 transition-all">
-                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain filter drop-shadow(0 0 6px rgba(16,185,129,0.4))" />
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-emerald-950 p-0.5 flex items-center justify-center shadow-lg shadow-emerald-500/25 border border-emerald-500/50 group-hover:border-emerald-400 group-hover:scale-105 transition-all overflow-hidden">
+                <img src="/app_logo.png" alt="Geo-Attend Logo" className="h-full w-full object-cover rounded-xl filter drop-shadow(0 0 6px rgba(16,185,129,0.4))" />
               </div>
               <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300">
                 Geo-Attend
@@ -269,9 +269,9 @@ export default function PortalSelector() {
           {/* Official App Logo Emblem */}
           <div className="flex justify-center mb-5">
             <div className="relative group cursor-pointer" onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}>
-              <div className="absolute -inset-1.5 rounded-3xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-500 opacity-40 blur-xl group-hover:opacity-75 transition duration-500" />
-              <div className="relative h-20 w-20 rounded-2xl bg-slate-900/90 border border-emerald-500/50 p-2.5 shadow-2xl flex items-center justify-center transform group-hover:scale-105 transition-all">
-                <img src="/favicon.svg" alt="Geo-Attend App Logo" className="h-full w-full object-contain filter drop-shadow(0 0 10px rgba(16,185,129,0.5))" />
+              <div className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-500 opacity-40 blur-xl group-hover:opacity-75 transition duration-500" />
+              <div className="relative h-24 w-24 rounded-3xl bg-slate-900/90 border border-emerald-500/50 p-1 shadow-2xl flex items-center justify-center transform group-hover:scale-105 transition-all overflow-hidden">
+                <img src="/app_logo.png" alt="Geo-Attend App Logo" className="h-full w-full object-cover rounded-2xl filter drop-shadow(0 0 12px rgba(16,185,129,0.5))" />
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v15-new-logo';
+const CACHE_NAME = 'geo-attend-v16-custom-app-photo';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

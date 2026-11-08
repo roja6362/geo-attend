@@ -732,8 +732,8 @@ export default function StudentDashboard() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="h-9 w-9 rounded-xl bg-slate-900 border border-emerald-500/50 p-1 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:border-emerald-400 group-hover:scale-105 transition-all">
-                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain filter drop-shadow(0 0 6px rgba(16,185,129,0.4))" />
+              <div className="h-9 w-9 rounded-xl bg-slate-900 border border-emerald-500/50 p-0.5 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:border-emerald-400 group-hover:scale-105 transition-all overflow-hidden">
+                <img src="/app_logo.png" alt="Geo-Attend Logo" className="h-full w-full object-cover rounded-lg filter drop-shadow(0 0 6px rgba(16,185,129,0.4))" />
               </div>
               <div>
                 <span className="font-bold text-base sm:text-lg text-gray-900 dark:text-white leading-none block">

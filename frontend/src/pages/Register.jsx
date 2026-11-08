@@ -65,8 +65,8 @@ export default function Register() {
 
           <div className="relative z-10 space-y-6">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="h-8 w-8 bg-slate-900 border border-blue-500/40 rounded-lg p-0.5 flex items-center justify-center text-white shadow-md group-hover:border-blue-400 transition-all">
-                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain" />
+              <div className="h-8 w-8 bg-slate-900 border border-blue-500/40 rounded-lg p-0.5 flex items-center justify-center text-white shadow-md group-hover:border-blue-400 transition-all overflow-hidden">
+                <img src="/app_logo.png" alt="Geo-Attend Logo" className="h-full w-full object-cover rounded" />
               </div>
               <span className="font-mono tracking-widest text-sm font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-300">Geo-Attend</span>
             </Link>

@@ -41,8 +41,8 @@ export default function BlockchainExplorer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="h-9 w-9 rounded-xl bg-slate-900 border border-blue-500/50 p-1 flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:border-blue-400 group-hover:scale-105 transition-all">
-                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain filter drop-shadow(0 0 6px rgba(59,130,246,0.4))" />
+              <div className="h-9 w-9 rounded-xl bg-slate-900 border border-blue-500/50 p-0.5 flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:border-blue-400 group-hover:scale-105 transition-all overflow-hidden">
+                <img src="/app_logo.png" alt="Geo-Attend Logo" className="h-full w-full object-cover rounded-lg filter drop-shadow(0 0 6px rgba(59,130,246,0.4))" />
               </div>
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-white">
                 Geo-Chain Ledger Explorer
