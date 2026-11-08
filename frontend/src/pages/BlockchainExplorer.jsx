@@ -40,10 +40,14 @@ export default function BlockchainExplorer() {
       <nav className="bg-gray-900 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Database className="h-8 w-8 text-blue-400 mr-2" />
-              <span className="text-xl font-bold">Geo-Chain Ledger Explorer</span>
-            </div>
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="h-9 w-9 rounded-xl bg-slate-900 border border-blue-500/50 p-1 flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:border-blue-400 group-hover:scale-105 transition-all">
+                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain filter drop-shadow(0 0 6px rgba(59,130,246,0.4))" />
+              </div>
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-white">
+                Geo-Chain Ledger Explorer
+              </span>
+            </Link>
             <Link to="/" className="flex items-center text-sm font-medium text-gray-300 hover:text-white transition-colors">
               <ArrowLeft className="h-5 w-5 mr-1" /> Back to Portals
             </Link>

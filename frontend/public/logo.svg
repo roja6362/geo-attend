@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#061324" />
+    </linearGradient>
+
+    <!-- Emerald-to-Cyan Primary Tech Gradient -->
+    <linearGradient id="primaryGrad" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <!-- Accent Indigo / Violet Gradient -->
+    <linearGradient id="accentGrad" x1="120" y1="120" x2="392" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <!-- Radar Pulse Wave Gradient -->
+    <radialGradient id="radarPulse" cx="256" cy="235" r="190" gradientUnits="userSpaceOnUse">
+      <stop offset="60%" stop-color="#06b6d4" stop-opacity="0" />
+      <stop offset="85%" stop-color="#10b981" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Core Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="strongGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Rounded Container -->
+  <rect width="512" height="512" rx="120" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="4" />
+
+  <!-- Background Geofence Radar Pulse Circles -->
+  <circle cx="256" cy="235" r="185" stroke="url(#primaryGrad)" stroke-width="2" stroke-opacity="0.25" stroke-dasharray="8 8" />
+  <circle cx="256" cy="235" r="140" stroke="url(#primaryGrad)" stroke-width="2.5" stroke-opacity="0.35" />
+  <circle cx="256" cy="235" r="185" fill="url(#radarPulse)" />
+
+  <!-- Outer Cryptographic Security Shield Contour -->
+  <path d="M 256 65
+           C 345 65 405 92 418 104
+           C 420 185 412 305 256 422
+           C 100 305 92 185 94 104
+           C 107 92 167 65 256 65 Z"
+        stroke="url(#primaryGrad)"
+        stroke-width="5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-opacity="0.5" />
+
+  <!-- AI Biometric Viewfinder Reticle Corners [  ] -->
+  <!-- Top Left -->
+  <path d="M 125 185 L 125 145 C 125 135 135 125 145 125 L 185 125"
+        stroke="#38bdf8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <!-- Top Right -->
+  <path d="M 327 125 L 367 125 C 377 125 387 135 387 145 L 387 185"
+        stroke="#38bdf8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <!-- Bottom Left -->
+  <path d="M 125 315 L 125 355 C 125 365 135 375 145 375 L 185 375"
+        stroke="#38bdf8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <!-- Bottom Right -->
+  <path d="M 327 375 L 367 375 C 377 375 387 365 387 355 L 387 315"
+        stroke="#38bdf8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+
+  <!-- Central Geofence Pin & Facial Biometric Body -->
+  <!-- Outer GPS Pin Body -->
+  <path d="M 256 120
+           C 198 120 152 166 152 224
+           C 152 290 236 375 256 392
+           C 276 375 360 290 360 224
+           C 360 166 314 120 256 120 Z"
+        fill="#0f172a"
+        fill-opacity="0.85"
+        stroke="url(#primaryGrad)"
+        stroke-width="10"
+        stroke-linejoin="round"
+        filter="url(#strongGlow)" />
+
+  <!-- Inner Biometric Facial Mesh Connections (Hexagon nodes & links) -->
+  <!-- Forehead Node -->
+  <circle cx="256" cy="172" r="7" fill="#34d399" filter="url(#glow)" />
+  <!-- Left Eye Node -->
+  <circle cx="215" cy="208" r="7" fill="#38bdf8" filter="url(#glow)" />
+  <!-- Right Eye Node -->
+  <circle cx="297" cy="208" r="7" fill="#38bdf8" filter="url(#glow)" />
+  <!-- Nose Core Node -->
+  <circle cx="256" cy="235" r="9" fill="#10b981" filter="url(#strongGlow)" />
+  <!-- Left Cheek Node -->
+  <circle cx="202" cy="262" r="6" fill="#818cf8" />
+  <!-- Right Cheek Node -->
+  <circle cx="310" cy="262" r="6" fill="#818cf8" />
+  <!-- Mouth / Chin Node -->
+  <circle cx="256" cy="288" r="7" fill="#38bdf8" filter="url(#glow)" />
+  <!-- Bottom Anchor Node -->
+  <circle cx="256" cy="336" r="6" fill="#34d399" />
+
+  <!-- Constellation Mesh Link Lines -->
+  <g stroke="url(#accentGrad)" stroke-width="2.5" stroke-opacity="0.85" stroke-linecap="round">
+    <!-- Forehead to Eyes -->
+    <line x1="256" y1="172" x2="215" y2="208" />
+    <line x1="256" y1="172" x2="297" y2="208" />
+    <line x1="215" y1="208" x2="297" y2="208" stroke-dasharray="3 3" />
+
+    <!-- Eyes to Nose Core -->
+    <line x1="215" y1="208" x2="256" y2="235" />
+    <line x1="297" y1="208" x2="256" y2="235" />
+
+    <!-- Cheeks to Nose -->
+    <line x1="202" y1="262" x2="256" y2="235" />
+    <line x1="310" y1="262" x2="256" y2="235" />
+
+    <!-- Cheeks to Eyes -->
+    <line x1="202" y1="262" x2="215" y2="208" />
+    <line x1="310" y1="262" x2="297" y2="208" />
+
+    <!-- Cheeks to Mouth -->
+    <line x1="202" y1="262" x2="256" y2="288" />
+    <line x1="310" y1="262" x2="256" y2="288" />
+    <line x1="256" y1="235" x2="256" y2="288" />
+
+    <!-- Mouth to Bottom Anchor -->
+    <line x1="256" y1="288" x2="256" y2="336" />
+    <line x1="202" y1="262" x2="256" y2="336" stroke-opacity="0.4" />
+    <line x1="310" y1="262" x2="256" y2="336" stroke-opacity="0.4" />
+  </g>
+
+  <!-- Central Glowing Biometric Core Center -->
+  <circle cx="256" cy="235" r="18" fill="#10b981" fill-opacity="0.3" filter="url(#glow)" />
+  <circle cx="256" cy="235" r="5" fill="#ffffff" />
+
+  <!-- Blockchain Hash Block Seal at Bottom Center -->
+  <rect x="216" y="420" width="80" height="24" rx="12" fill="#0f172a" stroke="url(#primaryGrad)" stroke-width="2.5" />
+  <circle cx="232" cy="432" r="3.5" fill="#10b981" filter="url(#glow)" />
+  <line x1="243" y1="432" x2="285" y2="432" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 4" />
+</svg>

@@ -731,9 +731,9 @@ export default function StudentDashboard() {
       <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="h-9 w-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/30">
-                <GraduationCap className="h-5 w-5" />
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="h-9 w-9 rounded-xl bg-slate-900 border border-emerald-500/50 p-1 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:border-emerald-400 group-hover:scale-105 transition-all">
+                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain filter drop-shadow(0 0 6px rgba(16,185,129,0.4))" />
               </div>
               <div>
                 <span className="font-bold text-base sm:text-lg text-gray-900 dark:text-white leading-none block">
@@ -743,7 +743,7 @@ export default function StudentDashboard() {
                   {user.name} {user.usn ? `• ${user.usn}` : ''}
                 </span>
               </div>
-            </div>
+            </Link>
 
             {/* Quick actions & Logout */}
             <div className="flex items-center space-x-2 sm:space-x-3">

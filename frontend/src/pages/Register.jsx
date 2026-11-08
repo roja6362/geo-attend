@@ -64,12 +64,12 @@ export default function Register() {
           <div className="absolute inset-0 bg-indigo-500/5 mix-blend-color z-0"></div>
 
           <div className="relative z-10 space-y-6">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-blue-500 rounded-lg flex items-center justify-center text-white shadow-md">
-                <Fingerprint className="h-4.5 w-4.5" />
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="h-8 w-8 bg-slate-900 border border-blue-500/40 rounded-lg p-0.5 flex items-center justify-center text-white shadow-md group-hover:border-blue-400 transition-all">
+                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain" />
               </div>
-              <span className="font-mono tracking-widest text-sm font-extrabold uppercase">Geo-System</span>
-            </div>
+              <span className="font-mono tracking-widest text-sm font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-300">Geo-Attend</span>
+            </Link>
 
             <div className="pt-4 space-y-2">
               <h3 className="text-xl font-bold leading-tight">Decentralized AI Roster Ledger</h3>

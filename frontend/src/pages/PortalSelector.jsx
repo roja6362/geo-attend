@@ -195,27 +195,27 @@ export default function PortalSelector() {
       <header className="border-b border-white/10 bg-black/40 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <Fingerprint className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex items-center">
-              <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-white">
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-emerald-950 p-1 flex items-center justify-center shadow-lg shadow-emerald-500/25 border border-emerald-500/50 group-hover:border-emerald-400 group-hover:scale-105 transition-all">
+                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain filter drop-shadow(0 0 6px rgba(16,185,129,0.4))" />
+              </div>
+              <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300">
                 Geo-Attend
               </span>
-              <button
-                onClick={() => {
-                  setCustomApiUrlInput(getApiBaseUrl() || '');
-                  setPingStatus(null);
-                  setShowServerModal(true);
-                }}
-                className="flex items-center gap-1.5 ml-2.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors cursor-pointer"
-                title="Click to check or configure Cloud Server API"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Cloud Server</span>
-                <Settings className="h-2.5 w-2.5 opacity-70" />
-              </button>
-            </div>
+            </Link>
+            <button
+              onClick={() => {
+                setCustomApiUrlInput(getApiBaseUrl() || '');
+                setPingStatus(null);
+                setShowServerModal(true);
+              }}
+              className="flex items-center gap-1.5 ml-2.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors cursor-pointer"
+              title="Click to check or configure Cloud Server API"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Cloud Server</span>
+              <Settings className="h-2.5 w-2.5 opacity-70" />
+            </button>
           </div>
 
           {/* Action buttons */}
@@ -266,6 +266,16 @@ export default function PortalSelector() {
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 w-full flex-grow flex flex-col justify-center">
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+          {/* Official App Logo Emblem */}
+          <div className="flex justify-center mb-5">
+            <div className="relative group cursor-pointer" onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}>
+              <div className="absolute -inset-1.5 rounded-3xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-500 opacity-40 blur-xl group-hover:opacity-75 transition duration-500" />
+              <div className="relative h-20 w-20 rounded-2xl bg-slate-900/90 border border-emerald-500/50 p-2.5 shadow-2xl flex items-center justify-center transform group-hover:scale-105 transition-all">
+                <img src="/favicon.svg" alt="Geo-Attend App Logo" className="h-full w-full object-contain filter drop-shadow(0 0 10px rgba(16,185,129,0.5))" />
+              </div>
+            </div>
+          </div>
+
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-4">
             <Sparkles className="h-3.5 w-3.5" />
             Installable Mobile App • Biometric Face & Campus Geofencing

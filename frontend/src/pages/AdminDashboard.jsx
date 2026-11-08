@@ -414,10 +414,12 @@ export default function AdminDashboard() {
       <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <ShieldAlert className="h-8 w-8 text-blue-600 mr-2" />
-              <span className="text-xl font-bold text-gray-905 dark:text-white">Admin Console</span>
-            </div>
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="h-9 w-9 rounded-xl bg-slate-900 border border-blue-500/50 p-1 flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:border-blue-400 group-hover:scale-105 transition-all">
+                <img src="/favicon.svg" alt="Geo-Attend Logo" className="h-full w-full object-contain filter drop-shadow(0 0 6px rgba(59,130,246,0.4))" />
+              </div>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">Admin Console</span>
+            </Link>
             <div className="flex items-center gap-4">
               <Link to="/" className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
                 All Portals

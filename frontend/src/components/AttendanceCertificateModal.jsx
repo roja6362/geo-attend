@@ -78,8 +78,13 @@ export default function AttendanceCertificateModal({ isOpen, onClose, student, h
           
           {/* Institutional Header */}
           <div className="text-center border-b-2 border-slate-900 pb-5 space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-extrabold uppercase tracking-widest mb-1">
-              Autonomous University Center of Excellence
+            <div className="flex items-center justify-center gap-2.5 mb-1.5">
+              <div className="h-8 w-8 rounded-xl bg-slate-900 p-1 flex items-center justify-center shadow-md border border-slate-800">
+                <img src="/favicon.svg" alt="Geo-Attend Official Seal" className="h-full w-full object-contain" />
+              </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-extrabold uppercase tracking-widest">
+                Autonomous University Center of Excellence
+              </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 uppercase">
               Global Institute of Technology & Science
@@ -243,3 +248,4 @@ export default function AttendanceCertificateModal({ isOpen, onClose, student, h
     </div>
   );
 }
+
