@@ -286,7 +286,7 @@ export default function PortalSelector() {
 
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-4">
             <Sparkles className="h-3.5 w-3.5" />
-            Installable Mobile App • Biometric Face & Campus Geofencing
+            Mobile App • Biometric & Campus Geofencing
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
             Separate Portals for <br className="hidden sm:block" />
@@ -295,7 +295,7 @@ export default function PortalSelector() {
             </span>
           </h1>
           <p className="text-sm sm:text-base text-gray-300 max-w-2xl mx-auto">
-            Install and run seamlessly as a standalone mobile app on Android or iPhone, or access on desktop. Biometric selfie verification, GPS distance checks, and immutable blockchain ledger.
+            Campus attendance platform with biometric verification, GPS geofencing, and blockchain ledger.
           </p>
 
           {/* Quick Install Mobile Banner */}
@@ -305,7 +305,7 @@ export default function PortalSelector() {
               className="py-2.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all cursor-pointer"
             >
               <Smartphone className="h-4 w-4" />
-              <span>Install App on Your Phone (Android / iPhone)</span>
+              <span>Install App on Mobile</span>
             </button>
           </div>
         </div>
@@ -325,29 +325,29 @@ export default function PortalSelector() {
               
               <h2 className="text-2xl font-bold text-white mb-2">Student Portal</h2>
               <p className="text-xs sm:text-sm text-gray-300 mb-6 leading-relaxed">
-                Clock in your daily attendance via mobile selfie camera & GPS geofence verification, track your personal attendance percentage, and verify cryptographic blockchain receipts.
+                Mark daily attendance with facial biometrics and GPS geofence verification.
               </p>
 
               <div className="space-y-2.5 mb-8 text-xs text-gray-300">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span className="text-emerald-300 font-medium">🛡️ Cheat-Proof Dynamic Liveness & Anti-Spoofing</span>
+                  <span className="text-emerald-300 font-medium">Dynamic Liveness & Anti-Spoofing</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span>Mobile camera selfie & 128-d face recognition</span>
+                  <span>Facial Biometric Recognition</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span>Real-time classroom GPS radar & geofence</span>
+                  <span>Classroom GPS Geofence</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span>Personal attendance % & 75% exam meter</span>
+                  <span>Attendance Analytics & 75% Threshold</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span>Cryptographic Blockchain ledger receipts</span>
+                  <span>Immutable Blockchain Ledger</span>
                 </div>
               </div>
             </div>
@@ -365,7 +365,7 @@ export default function PortalSelector() {
                 onClick={() => quickDemoLogin('student')}
                 className="w-full py-2 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-xs font-medium transition-colors"
               >
-                ⚡ 1-Click Demo Login (Roja)
+                Quick Login (Student)
               </button>
             </div>
           </div>
@@ -383,25 +383,25 @@ export default function PortalSelector() {
 
               <h2 className="text-2xl font-bold text-white mb-2">Teacher Portal</h2>
               <p className="text-xs sm:text-sm text-gray-300 mb-6 leading-relaxed">
-                Review live class attendance feeds, analyze student performance trends, perform status overrides for approved leaves, and generate instant academic Excel/CSV reports.
+                Manage live classroom attendance sessions, review student logs, and export reports.
               </p>
 
               <div className="space-y-2.5 mb-8 text-xs text-gray-300">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                  <span>Real-time class attendance roster & logs</span>
+                  <span>Class Attendance Roster</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                  <span>Department & semester analytics charts</span>
+                  <span>Department & Semester Analytics</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                  <span>1-Click status override & manual review</span>
+                  <span>Status Override & Manual Review</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                  <span>One-click CSV & printable academic reports</span>
+                  <span>Export CSV & Printable Reports</span>
                 </div>
               </div>
             </div>
@@ -419,7 +419,7 @@ export default function PortalSelector() {
                 onClick={() => quickDemoLogin('teacher')}
                 className="w-full py-2 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-xs font-medium transition-colors"
               >
-                ⚡ 1-Click Demo Login (Prof. Ramesh)
+                Quick Login (Teacher)
               </button>
             </div>
           </div>
@@ -437,25 +437,25 @@ export default function PortalSelector() {
 
               <h2 className="text-2xl font-bold text-white mb-2">Admin Portal</h2>
               <p className="text-xs sm:text-sm text-gray-300 mb-6 leading-relaxed">
-                Manage campus satellite geofencing boundaries, register new student profiles and train facial embeddings via webcam or photo uploads, and audit the full blockchain ledger.
+                Configure campus geofences, register student biometrics, and audit system logs.
               </p>
 
               <div className="space-y-2.5 mb-8 text-xs text-gray-300">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                  <span>Interactive satellite campus geofence manager</span>
+                  <span>Campus Geofence Configuration</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                  <span>Student face enrollment (Webcam + Upload)</span>
+                  <span>Student Profile & Biometric Registration</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                  <span>Institution-wide stats & user administration</span>
+                  <span>User Administration & System Stats</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                  <span>Immutable Blockchain ledger auditing</span>
+                  <span>Blockchain Ledger Auditing</span>
                 </div>
               </div>
             </div>
@@ -473,7 +473,7 @@ export default function PortalSelector() {
                 onClick={() => quickDemoLogin('admin')}
                 className="w-full py-2 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 text-xs font-medium transition-colors"
               >
-                ⚡ 1-Click Demo Login (Super Admin)
+                Quick Login (Admin)
               </button>
             </div>
           </div>

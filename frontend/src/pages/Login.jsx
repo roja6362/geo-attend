@@ -326,11 +326,11 @@ export default function Login() {
           </button>
         </form>
 
-        {/* 1-Tap Quick Credentials Helper (Extremely convenient on mobile keyboards) */}
+        {/* Quick Credentials Helper */}
         <div className="mt-6 pt-5 border-t border-white/10">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-              ⚡ 1-Tap Quick Fill Credentials:
+              Quick Accounts:
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -339,28 +339,28 @@ export default function Login() {
               onClick={() => fillCredentials('student', 'thimmareddym4@gmail.com', 'MRoja@2004')}
               className="py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-medium text-center transition-colors"
             >
-              Roja (Student)
+              M Roja
             </button>
             <button
               type="button"
               onClick={() => fillCredentials('student', 'student@college.edu', 'password123')}
               className="py-1.5 px-2 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 rounded-lg text-[11px] font-medium text-center transition-colors"
             >
-              Demo Student
+              Student
             </button>
             <button
               type="button"
               onClick={() => fillCredentials('teacher')}
               className="py-1.5 px-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 rounded-lg text-[11px] font-medium text-center transition-colors"
             >
-              Teacher Demo
+              Teacher
             </button>
             <button
               type="button"
               onClick={() => fillCredentials('admin')}
               className="py-1.5 px-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 rounded-lg text-[11px] font-medium text-center transition-colors"
             >
-              Admin Demo
+              Admin
             </button>
           </div>
         </div>

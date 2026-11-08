@@ -71,7 +71,7 @@ export default function SystemStatus() {
       status: "Operational",
       latency: "14ms inference",
       icon: Cpu,
-      desc: "128-dimensional deep feature matching & Laplacian micro-texture anti-spoofing."
+      desc: "Facial vector matching and dynamic liveness verification."
     },
     {
       name: "Spherical Geofence GPS Resolver",
@@ -79,7 +79,7 @@ export default function SystemStatus() {
       status: "Operational",
       latency: "2ms calculation",
       icon: MapPin,
-      desc: "High-precision Haversine perimeter verification with GPS spoofing shields."
+      desc: "GPS coordinate validation and campus geofence calculation."
     },
     {
       name: "Geo-Chain Cryptographic Ledger",
@@ -87,7 +87,7 @@ export default function SystemStatus() {
       status: "Operational",
       latency: `Height #${blockCount}`,
       icon: Database,
-      desc: "SHA-256 tamper-evident merkle chain storing immutable attendance blocks."
+      desc: "SHA-256 cryptographic ledger storing immutable attendance records."
     },
     {
       name: "PWA Mobile Runtime & Offline Sync",
@@ -95,7 +95,7 @@ export default function SystemStatus() {
       status: "Operational",
       latency: "0ms local",
       icon: Smartphone,
-      desc: "Service worker cache v17 with local IndexedDB queue for zero-network environments."
+      desc: "Service worker cache and local storage for offline operation."
     },
     {
       name: "Real-time Event Broadcast Mesh",

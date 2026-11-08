@@ -837,7 +837,6 @@ export default function TeacherDashboard() {
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Subject Name & Code *
                     </label>
-                    <span className="text-[10px] text-indigo-500 font-medium">Type freely or choose below</span>
                   </div>
                   <input
                     type="text"
@@ -945,7 +944,7 @@ export default function TeacherDashboard() {
             <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
               {presentCount}
             </div>
-            <p className="text-[11px] text-gray-500 mt-2">Verified Face + Geofence</p>
+            <p className="text-[11px] text-gray-500 mt-2">Verified check-ins</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
@@ -955,7 +954,7 @@ export default function TeacherDashboard() {
             <div className="text-3xl font-extrabold text-red-500">
               {rejectedCount}
             </div>
-            <p className="text-[11px] text-gray-500 mt-2">Outside bounds / face mismatch</p>
+            <p className="text-[11px] text-gray-500 mt-2">Flagged entries</p>
           </div>
         </div>
 
@@ -992,7 +991,7 @@ export default function TeacherDashboard() {
                 Academic Actions
               </h3>
               <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-                Download verified attendance logs for academic compliance, grading, and examination eligibility audits.
+                Export verified attendance logs for institutional reporting.
               </p>
             </div>
 
@@ -1002,7 +1001,7 @@ export default function TeacherDashboard() {
                 className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all"
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                <span>Export Attendance Spreadsheet (CSV)</span>
+                <span>Export CSV</span>
               </button>
 
               <button
@@ -1010,7 +1009,7 @@ export default function TeacherDashboard() {
                 className="w-full py-3 px-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 font-semibold text-xs border border-indigo-200 dark:border-indigo-900 flex items-center justify-center gap-2 transition-all"
               >
                 <Download className="h-4 w-4" />
-                <span>Print / Save PDF Summary</span>
+                <span>Print PDF</span>
               </button>
             </div>
           </div>

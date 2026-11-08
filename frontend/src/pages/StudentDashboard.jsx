@@ -1085,12 +1085,12 @@ export default function StudentDashboard() {
                           <Check className="h-3 w-3" /> Align Face Here
                         </span>
                         <span className="text-[10px] text-emerald-300 font-medium bg-black/70 px-2 py-0.5 rounded-full backdrop-blur-xs">
-                          Organic Skin Detection Ready
+                          Biometric Sensor Ready
                         </span>
                       </div>
                       <div className="mt-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] text-gray-200 border border-white/10 flex items-center gap-1.5">
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>Cheat-Proof AI: Photo & Screen Replay Guard Active</span>
+                        <span>Biometric Anti-Spoofing Active</span>
                       </div>
                     </div>
                   )}
@@ -1105,31 +1105,31 @@ export default function StudentDashboard() {
                         </div>
                       </div>
                       <h4 className="font-bold text-base sm:text-lg text-white">
-                        AI Biometric & Liveness Analysis
+                        Biometric & Liveness Verification
                       </h4>
                       <p className="text-xs text-gray-300 mt-1 mb-4 text-center">
-                        Evaluating micro-texture, screen glare, dynamic motion & facial vectors
+                        Verifying facial biometrics and GPS perimeter...
                       </p>
 
                       <div className="w-full max-w-xs space-y-2 text-[11px]">
                         <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                          <span className="text-gray-300">1. Campus Geofence Perimeter</span>
+                          <span className="text-gray-300">1. Campus Geofence</span>
                           <span className="text-emerald-400 font-semibold">Validating...</span>
                         </div>
                         <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                          <span className="text-gray-300">2. Organic Skin Texture (Laplacian)</span>
+                          <span className="text-gray-300">2. Facial Liveness</span>
                           <span className="text-emerald-400 font-semibold">Computing...</span>
                         </div>
                         <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                          <span className="text-gray-300">3. Screen Glare / Reflection Detection</span>
+                          <span className="text-gray-300">3. Anti-Spoof Filter</span>
                           <span className="text-emerald-400 font-semibold">Scanning...</span>
                         </div>
                         <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                          <span className="text-gray-300">4. Dynamic Challenge Verification</span>
+                          <span className="text-gray-300">4. Biometric Feature Match</span>
                           <span className="text-emerald-400 font-semibold">Matching...</span>
                         </div>
                         <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                          <span className="text-gray-300">5. Cryptographic Blockchain Block</span>
+                          <span className="text-gray-300">5. Blockchain Ledger Entry</span>
                           <span className="text-blue-400 font-semibold">Hashing...</span>
                         </div>
                       </div>
@@ -1160,14 +1160,14 @@ export default function StudentDashboard() {
                         : `Punch Attendance for ${selectedSession?.subject_code || 'Lecture'}`}
                     </span>
                   </button>
-                  <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-2.5 px-1">
+                  <div className="flex items-center justify-center gap-3 text-[11px] text-gray-500 dark:text-gray-400 mt-2.5 px-1">
                     <span className="flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-emerald-500" /> Instant Scan
+                      <Sparkles className="h-3 w-3 text-emerald-500" /> Facial Biometrics
                     </span>
                     <span>•</span>
-                    <span>Laplacian Micro-Patterns</span>
+                    <span>GPS Geofence</span>
                     <span>•</span>
-                    <span>Screen Glare Shield</span>
+                    <span>Blockchain Verified</span>
                   </div>
                 </div>
               </div>
@@ -1194,25 +1194,25 @@ export default function StudentDashboard() {
                       </div>
                       <div className="text-center">
                         <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-                          1-Tap Instant Biometric Check-In Ready
+                          Biometric Verification Ready
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Click "Punch Attendance" to instantly scan face biometrics, verify organic skin texture, and seal attendance.
+                          Position your face within the frame and click Punch Attendance.
                         </p>
                       </div>
 
                       <div className="p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl space-y-1.5 text-[11px]">
                         <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                           <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
-                          <span>Blocks printed paper photographs</span>
+                          <span>Facial recognition verification</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                           <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
-                          <span>Detects smartphone LCD screen reflections</span>
+                          <span>Campus geofence perimeter check</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                           <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
-                          <span>Random gesture challenge defeats replay attacks</span>
+                          <span>Cryptographic ledger confirmation</span>
                         </div>
                       </div>
                     </div>
@@ -1222,7 +1222,7 @@ export default function StudentDashboard() {
                     <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 space-y-2 animate-in fade-in">
                       <div className="flex items-center gap-2 font-bold text-sm">
                         <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                        <span>Live Human Verified & Attendance Approved!</span>
+                        <span>Attendance Approved</span>
                       </div>
                       <p className="text-xs text-emerald-700 dark:text-emerald-300">{message}</p>
                     </div>
@@ -1236,13 +1236,13 @@ export default function StudentDashboard() {
                         ) : (
                           <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                         )}
-                        <span>{details?.spoof_detected ? 'Anti-Spoofing Alert: Spoof Blocked' : 'Attendance Validation Failed'}</span>
+                        <span>{details?.spoof_detected ? 'Biometric Validation Failed' : 'Attendance Validation Failed'}</span>
                       </div>
                       <p className="text-xs text-red-700 dark:text-red-300">{message}</p>
                       
                       {details?.spoof_detected && (
                         <div className="p-2.5 bg-red-100/60 dark:bg-red-900/40 rounded-lg text-[11px] text-red-900 dark:text-red-200 font-medium border border-red-300 dark:border-red-800">
-                          🛡️ Fraud Prevention: The camera detected characteristics of a printed paper photo, motionless static image, or digital screen reflection.
+                          Verification failed. Please ensure your face is clearly visible without glare or obstructions.
                         </div>
                       )}
 
@@ -1251,7 +1251,7 @@ export default function StudentDashboard() {
                         className="w-full py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
                       >
                         <RotateCcw className="h-3.5 w-3.5" />
-                        <span>Try Again with New Dynamic Challenge</span>
+                        <span>Try Again</span>
                       </button>
                     </div>
                   )}
@@ -1260,21 +1260,21 @@ export default function StudentDashboard() {
                   {details && (
                     <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2.5 text-xs">
                       <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800/60">
-                        <span className="text-gray-600 dark:text-gray-400">🛡️ AI Liveness & Anti-Spoof</span>
+                        <span className="text-gray-600 dark:text-gray-400">Biometric Liveness</span>
                         <span className={`font-semibold ${details.liveness_passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {details.liveness_passed ? 'Passed (Organic 3D Skin)' : 'Failed / Spoof ✗'} ({details.liveness_score}%)
+                          {details.liveness_passed ? 'Passed' : 'Failed ✗'} ({details.liveness_score}%)
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800/60">
-                        <span className="text-gray-600 dark:text-gray-400">⚡ Check-In Speed</span>
+                        <span className="text-gray-600 dark:text-gray-400">Scan Speed</span>
                         <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                          Instant Scan Verified ✓
+                          Verified ✓
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800/60">
-                        <span className="text-gray-600 dark:text-gray-400">🧬 Biometric Face Match</span>
+                        <span className="text-gray-600 dark:text-gray-400">Face Match</span>
                         <span className={`font-semibold ${details.face_match ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                           {details.face_match ? 'Verified ✓' : 'Mismatch ✗'} ({details.face_confidence?.toFixed(1)}%)
                         </span>
@@ -1716,13 +1716,10 @@ export default function StudentDashboard() {
                       </div>
                       <div>
                         <h4 className="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
-                          75% Safe-to-Skip & Recovery Simulator
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">
-                            Interactive What-If
-                          </span>
+                          75% Attendance Simulator
                         </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Simulate missing or attending upcoming lecture sessions to see your future exam eligibility in real time.
+                          Project attendance eligibility based on upcoming lectures.
                         </p>
                       </div>
                     </div>
@@ -2167,10 +2164,10 @@ export default function StudentDashboard() {
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300">
                 <p className="font-semibold flex items-center gap-1.5">
                   <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                  <span>Cheat-Proof Liveness Verified & Blockchain Sealed</span>
+                  <span>Biometric Verified & Blockchain Recorded</span>
                 </p>
                 <p className="text-[11px] mt-0.5">
-                  Organic 3D human skin micro-texture confirmed. Zero digital screen glare detected. Immutably stamped on the SHA-256 college blockchain.
+                  Facial vectors and geofence verified. Immutably recorded on the SHA-256 ledger.
                 </p>
               </div>
 
@@ -2192,11 +2189,11 @@ export default function StudentDashboard() {
                   <span className="font-semibold">{selectedProof.date} {selectedProof.time}</span>
                 </div>
 
-                {/* 🧬 Biometric Facial Similarity Meter */}
+                {/* Biometric Facial Similarity Meter */}
                 <div className="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl space-y-1.5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="text-gray-600 dark:text-gray-400 font-semibold flex items-center gap-1">
-                      🧬 Biometric Match (128-d Vector)
+                      Biometric Match Score
                     </span>
                     <span className="font-mono font-bold text-emerald-600">
                       {selectedProof.similarity_score || selectedProof.face_confidence || 98.7}%
@@ -2210,11 +2207,11 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                {/* 🛡️ AI Organic Liveness Meter */}
+                {/* AI Liveness Meter */}
                 <div className="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl space-y-1.5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="text-gray-600 dark:text-gray-400 font-semibold flex items-center gap-1">
-                      🛡️ Anti-Spoof Skin Liveness
+                      Liveness Score
                     </span>
                     <span className="font-mono font-bold text-teal-600">
                       {selectedProof.liveness_score || 99.2}%
@@ -2228,10 +2225,10 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                {/* 📍 Classroom Geofence Status */}
+                {/* Classroom Geofence Status */}
                 <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-500">📍 Classroom Geofence:</span>
-                  <span className="text-emerald-600 font-semibold">Inside Perimeter (~7.2m from center)</span>
+                  <span className="text-gray-500">Geofence Status:</span>
+                  <span className="text-emerald-600 font-semibold">Inside Perimeter</span>
                 </div>
 
                 {/* 🔗 Blockchain Block Seal */}

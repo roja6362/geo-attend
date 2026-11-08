@@ -983,7 +983,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Allowed Radius (meters) — <i>15m = 1 class, 45m = 1 building</i>
+                        Allowed Radius (meters)
                       </label>
                       <input 
                         type="number" 
@@ -1012,7 +1012,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Student Profile</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Add student demographic, contact information, and setup password credentials.
+                  Enroll student profile and credentials.
                 </p>
               </div>
 
@@ -1242,10 +1242,10 @@ export default function AdminDashboard() {
                     <span className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                       <FileSpreadsheet className="h-5 w-5" />
                     </span>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Institutional Bulk CSV Onboarding</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Bulk Student CSV Import</h2>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    Batch provision hundreds of students in one click with automatic USN indexing & default credentials.
+                    Batch enroll students via CSV format.
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1315,7 +1315,7 @@ export default function AdminDashboard() {
                       <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                         Validated Records Preview ({csvParsedRows.length} Students Detected)
                       </h3>
-                      <p className="text-xs text-gray-500">Review batch roster before committing to institutional database</p>
+                      <p className="text-xs text-gray-500">Review records before importing.</p>
                     </div>
                     <button
                       onClick={handleExecuteBulkImport}
@@ -1379,7 +1379,7 @@ export default function AdminDashboard() {
                 <div>
                   <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Geo-Spoofing Radar</span>
                   <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0 Anomalies</div>
-                  <span className="text-[11px] text-gray-500">100% Mock GPS blocks</span>
+                  <span className="text-[11px] text-gray-500">Mock location protected</span>
                 </div>
                 <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
                   <ShieldCheck className="h-6 w-6" />
@@ -1390,7 +1390,7 @@ export default function AdminDashboard() {
                 <div>
                   <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Biometric Liveness</span>
                   <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">100.0%</div>
-                  <span className="text-[11px] text-gray-500">Dynamic blink verified</span>
+                  <span className="text-[11px] text-gray-500">Liveness verified</span>
                 </div>
                 <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600">
                   <Eye className="h-6 w-6" />
@@ -1414,7 +1414,7 @@ export default function AdminDashboard() {
                 <div>
                   <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Chain Integrity</span>
                   <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">SHA-256</div>
-                  <span className="text-[11px] text-gray-500">Tamper-evident log chain</span>
+                  <span className="text-[11px] text-gray-500">Immutable ledger</span>
                 </div>
                 <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600">
                   <Lock className="h-6 w-6" />
@@ -1427,13 +1427,13 @@ export default function AdminDashboard() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-200 dark:border-gray-700">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <span>Immutable Security Audit Log Explorer</span>
+                    <span>Security Audit Log Explorer</span>
                     <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-mono">
                       ISO 27001 / SOC 2
                     </span>
                   </h3>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Real-time cryptographically hashed event stream tracking biometrics, geofences, and role authorization.
+                    Real-time event stream tracking biometrics, geofences, and system actions.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
