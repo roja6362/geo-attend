@@ -1660,6 +1660,13 @@ export default function StudentDashboard() {
                 </div>
 
                 <div className="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl">
+                  <div className="text-gray-400 text-[11px]">Institution</div>
+                  <div className="font-bold text-gray-900 dark:text-white text-sm mt-0.5">
+                    Ballari Institute of Technology and Management
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl">
                   <div className="text-gray-400 text-[11px]">Department</div>
                   <div className="font-bold text-gray-900 dark:text-white text-sm mt-0.5">
                     Computer Science & Applications

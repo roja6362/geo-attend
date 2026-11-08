@@ -11,7 +11,7 @@ export default function DetentionWarningModal({ isOpen, onClose, student }) {
   const studentDept = student.department || "Computer Science & Engineering";
   const studentSemester = student.semester ? `${student.semester}th Semester` : "7th Semester";
   const overallPct = student.overall_percentage || student.percentage || 68.4;
-  const noticeRef = `GITS/ACAD/WARN/${new Date().getFullYear()}/${(studentUsn || '001').replace(/[^a-zA-Z0-9]/g, '')}`;
+  const noticeRef = `BITM/ACAD/WARN/${new Date().getFullYear()}/${(studentUsn || '001').replace(/[^a-zA-Z0-9]/g, '')}`;
   const currentDate = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 
   // Subjects with attendance shortage (<75%)
@@ -62,17 +62,17 @@ export default function DetentionWarningModal({ isOpen, onClose, student }) {
                 <img src="/app_logo.png" alt="Geo-Attend Seal" className="h-full w-full object-cover rounded-lg" />
               </div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800">
-                Autonomous University Regulatory Body
+                Autonomous Institute • Affiliated to VTU, Belagavi
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 uppercase">
-              Global Institute of Technology & Science
+              Ballari Institute of Technology and Management
             </h1>
             <p className="text-xs text-slate-600 font-bold uppercase tracking-wider">
               Directorate of Academic Compliance & Semester Examinations
             </p>
             <p className="text-[11px] text-slate-500 font-mono">
-              Accredited Grade 'A+' • ISO 9001:2026 Academic Standard Compliant
+              Jnana Gangotri Campus, Ballari, Karnataka • Accredited Grade 'A+'
             </p>
           </div>
 

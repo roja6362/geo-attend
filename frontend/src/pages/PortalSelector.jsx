@@ -249,10 +249,13 @@ export default function PortalSelector() {
             </div>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">
             Campus Attendance Platform
           </h1>
-          <p className="text-sm sm:text-base text-gray-300">
+          <p className="text-sm sm:text-base font-semibold text-emerald-400 mb-1">
+            Ballari Institute of Technology and Management
+          </p>
+          <p className="text-xs sm:text-sm text-gray-300">
             Select your portal to access your workspace.
           </p>
         </div>

@@ -83,17 +83,17 @@ export default function AttendanceCertificateModal({ isOpen, onClose, student, h
                 <img src="/app_logo.png" alt="Geo-Attend Official Seal" className="h-full w-full object-cover rounded-lg" />
               </div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-extrabold uppercase tracking-widest">
-                Autonomous University Center of Excellence
+                Autonomous Institute • Affiliated to VTU, Belagavi
               </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 uppercase">
-              Global Institute of Technology & Science
+              Ballari Institute of Technology and Management
             </h1>
             <p className="text-xs text-slate-600 font-semibold">
               Department of Computer Science & Engineering • Directorate of Academic Compliance
             </p>
             <p className="text-[11px] text-slate-500 font-mono tracking-wider pt-0.5">
-              Accredited 'A+' Grade • ISO 9001:2026 Certified Academic Body
+              Jnana Gangotri Campus, Ballari, Karnataka • Accredited 'A+' Grade by NAAC • ISO 9001:2026
             </p>
           </div>
 
@@ -101,7 +101,7 @@ export default function AttendanceCertificateModal({ isOpen, onClose, student, h
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4">
             <div>
               <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold block">
-                Official Document Series: GITS-ATT-2026
+                Official Document Series: BITM-ATT-2026
               </span>
               <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wide">
                 Blockchain-Sealed Attendance Transcript & Exam Clearance

@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v23-strict-geofence';
+const CACHE_NAME = 'geo-attend-v24-bitm';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
