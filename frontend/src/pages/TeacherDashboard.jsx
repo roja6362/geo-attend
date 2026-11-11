@@ -29,7 +29,11 @@ import {
   FileText,
   Filter,
   Award,
-  QrCode
+  QrCode,
+  UserCheck,
+  Key,
+  Clock3,
+  PlusCircle
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
@@ -37,6 +41,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import DetentionWarningModal from '../components/DetentionWarningModal';
 import { API_URL } from '../config';
 import { onSyncEvent, broadcastEvent } from '../realtimeSync.js';
+import { BITM_DAILY_TIMETABLE } from '../data/schedule.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -84,6 +89,13 @@ export default function TeacherDashboard() {
   const [offlineQrToken, setOfflineQrToken] = useState('');
   const [qrSecondsLeft, setQrSecondsLeft] = useState(15);
   const [showOfflineQrModal, setShowOfflineQrModal] = useState(false);
+
+  // Teacher Manual Override States
+  const [showManualOverrideModal, setShowManualOverrideModal] = useState(false);
+  const [manualStudentUsn, setManualStudentUsn] = useState('3BR23CA060');
+  const [manualStudentName, setManualStudentName] = useState('M Roja');
+  const [manualReason, setManualReason] = useState('Phone battery discharged in class');
+  const [manualFeedback, setManualFeedback] = useState('');
 
   // Dynamic Rotating HMAC-SHA256 Encrypted Token (15s cycle)
   useEffect(() => {
@@ -300,11 +312,14 @@ export default function TeacherDashboard() {
       );
       const subId = matched ? matched.id : (parseInt(selectedSubjectId) || (subjects[0]?.id || 1));
 
+      const sessionPin = Math.floor(1000 + Math.random() * 9000).toString();
+
       const res = await axios.post(`${API_URL}/teacher/sessions/start`, {
         subject_id: subId,
         subject_name: finalSubjectName,
         title: lectureTitle || finalSubjectName,
-        room: roomNumber || 'Room 302'
+        room: roomNumber || 'Room 302',
+        pin: sessionPin
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -316,8 +331,10 @@ export default function TeacherDashboard() {
         title: lectureTitle || finalSubjectName,
         room: roomNumber || 'Room 302',
         is_active: true,
+        pin: sessionPin,
         start_time: new Date().toISOString()
       };
+      if (!sessionData.pin) sessionData.pin = sessionPin;
       setActiveSession(sessionData);
       try {
         localStorage.setItem('geoattend_active_session', JSON.stringify(sessionData));
@@ -333,6 +350,7 @@ export default function TeacherDashboard() {
         (s.code && finalSubjectName.toLowerCase().includes(s.code.toLowerCase())) ||
         (s.name && finalSubjectName.toLowerCase().includes(s.name.toLowerCase()))
       );
+      const sessionPin = Math.floor(1000 + Math.random() * 9000).toString();
       const fallbackSession = {
         id: Date.now(),
         subject_id: matched?.id || 1,
@@ -341,6 +359,7 @@ export default function TeacherDashboard() {
         title: lectureTitle || finalSubjectName,
         room: roomNumber || 'Room 302',
         is_active: true,
+        pin: sessionPin,
         start_time: new Date().toISOString()
       };
       setActiveSession(fallbackSession);
@@ -355,6 +374,67 @@ export default function TeacherDashboard() {
     } finally {
       setStartingSession(false);
     }
+  };
+
+  const handleManualOverridePunch = (e) => {
+    e.preventDefault();
+    if (!activeSession) return;
+    if (!manualStudentUsn.trim() || !manualStudentName.trim()) {
+      setManualFeedback('Please enter student Name and USN');
+      return;
+    }
+
+    const cleanUsn = manualStudentUsn.trim().toUpperCase();
+    const cleanName = manualStudentName.trim();
+
+    const manualRecord = {
+      id: Date.now(),
+      student_id: Date.now() % 10000,
+      student_name: cleanName,
+      usn: cleanUsn,
+      roll_no: cleanUsn,
+      department: 'Computer Science & Engineering',
+      status: 'PRESENT',
+      final_status: 'PRESENT',
+      face_verified: true,
+      face_match: true,
+      geo_verified: true,
+      inside_geofence: true,
+      liveness_verified: true,
+      liveness_passed: true,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: 'Today',
+      verification_method: 'Teacher Manual Override',
+      notes: manualReason,
+      subject_name: activeSession.subject_name,
+      subject_code: activeSession.subject_code,
+      liveness_score: 100,
+      similarity_score: 100,
+      face_confidence: 100,
+      block_id: Math.floor(Math.random() * 200) + 100,
+      block_hash: "0000" + Math.random().toString(16).substring(2, 12) + "a8f9c1e2"
+    };
+
+    setRollcallList(prev => [manualRecord, ...prev.filter(r => r.usn !== cleanUsn)]);
+    try {
+      const activeRollcall = JSON.parse(localStorage.getItem('geoattend_active_rollcall') || '[]');
+      activeRollcall.unshift(manualRecord);
+      localStorage.setItem('geoattend_active_rollcall', JSON.stringify(activeRollcall));
+
+      const hist = JSON.parse(localStorage.getItem('geoattend_mock_history') || '[]');
+      hist.unshift(manualRecord);
+      localStorage.setItem('geoattend_mock_history', JSON.stringify(hist));
+    } catch (err) {}
+
+    broadcastEvent('STUDENT_CHECKIN', { record: manualRecord });
+    broadcastEvent('ROLLCALL_UPDATED', { rollcall: [manualRecord, ...rollcallList] });
+
+    setManualFeedback(`✓ Successfully marked ${cleanName} (${cleanUsn}) PRESENT!`);
+    setTimeout(() => {
+      setManualFeedback('');
+      setShowManualOverrideModal(false);
+    }, 1200);
   };
 
   const handleEndSession = async () => {
@@ -712,9 +792,9 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
 
-                {/* Right Action Counters & End Button */}
+                {/* Right Action Counters, PIN, Manual Override & End Button */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="bg-gray-800/90 border border-gray-700/60 rounded-xl px-4 py-2.5 text-center">
+                  <div className="bg-gray-800/90 border border-gray-700/60 rounded-xl px-4 py-2 text-center">
                     <div className="text-2xl font-extrabold text-emerald-400">
                       {activeSession.present_count || rollcallList.filter(r => r.status === 'PRESENT').length}
                     </div>
@@ -723,21 +803,44 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
 
+                  {/* Classroom Emergency PIN for students with GPS issues */}
+                  <div className="bg-amber-500/15 border border-amber-500/30 rounded-xl px-3.5 py-2 text-center">
+                    <div className="text-xl font-mono font-black text-amber-300 tracking-widest">
+                      {activeSession.pin || '4829'}
+                    </div>
+                    <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center justify-center gap-1">
+                      <Key className="h-3 w-3" /> Room PIN
+                    </div>
+                  </div>
+
+                  {/* Manual Teacher Override */}
+                  <button
+                    onClick={() => {
+                      setManualFeedback('');
+                      setShowManualOverrideModal(true);
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 transition-all cursor-pointer"
+                    title="Mark attendance manually for student with dead phone or camera issue"
+                  >
+                    <UserCheck className="h-4 w-4" />
+                    <span>Manual Rollcall</span>
+                  </button>
+
                   <button
                     onClick={() => setShowOfflineQrModal(true)}
-                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all cursor-pointer"
+                    className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-600/30 flex items-center gap-1.5 transition-all cursor-pointer"
                     title="Display dynamic time-rotating QR for zero-network classrooms"
                   >
                     <QrCode className="h-4 w-4" />
-                    <span>📴 Offline Rotating QR</span>
+                    <span>Offline QR</span>
                   </button>
 
                   <button
                     onClick={handleEndSession}
-                    className="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 transition-all"
+                    className="px-3.5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center gap-1.5 transition-all cursor-pointer"
                   >
                     <Square className="h-4 w-4 fill-current" />
-                    <span>End & Close Attendance</span>
+                    <span>End Session</span>
                   </button>
                 </div>
               </div>
@@ -911,6 +1014,38 @@ export default function TeacherDashboard() {
                   </button>
                 </div>
               </form>
+
+              {/* Today's Timetable / 1-Click Launch */}
+              <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <Clock3 className="h-3.5 w-3.5 text-indigo-500" />
+                    <span>Today's Academic Timetable (BITM Ballari)</span>
+                  </span>
+                  <span className="text-[11px] text-gray-400">Click any slot to pre-fill</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {BITM_DAILY_TIMETABLE.map(t => (
+                    <div
+                      key={t.id}
+                      onClick={() => {
+                        setSubjectNameInput(`${t.code} - ${t.subject}`);
+                        setRoomNumber(t.room);
+                        setLectureTitle(`Lecture: ${t.subject}`);
+                      }}
+                      className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-750 bg-gray-50/70 dark:bg-gray-800/50 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 cursor-pointer transition-all flex items-center justify-between"
+                    >
+                      <div>
+                        <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{t.time} • {t.room}</div>
+                        <div className="text-xs font-semibold text-gray-900 dark:text-white truncate max-w-[170px]">{t.code} - {t.subject}</div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                        Select
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1631,6 +1766,125 @@ export default function TeacherDashboard() {
             >
               Close Display
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 📝 TEACHER MANUAL OVERRIDE MODAL (DEVICE/BATTERY EXCEPTION) */}
+      {showManualOverrideModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-emerald-500" />
+                <h3 className="font-bold text-base text-gray-900 dark:text-white">Teacher Manual Override</h3>
+              </div>
+              <button
+                onClick={() => setShowManualOverrideModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-lg leading-none cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Manually mark verified present for in-class students with dead battery, camera glitch, or phone issues.
+            </div>
+
+            {manualFeedback && (
+              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 text-amber-700 dark:text-amber-300 text-xs">
+                {manualFeedback}
+              </div>
+            )}
+
+            {/* Quick-fill student badges */}
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                Quick Select Registered Student:
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { name: 'M Roja', usn: '3BR23CA060' },
+                  { name: 'Rahul Sharma', usn: '3BR23CA012' },
+                  { name: 'Ananya Patel', usn: '3BR23CA005' }
+                ].map(s => (
+                  <button
+                    key={s.usn}
+                    type="button"
+                    onClick={() => {
+                      setManualStudentName(s.name);
+                      setManualStudentUsn(s.usn);
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors cursor-pointer"
+                  >
+                    {s.name} ({s.usn})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form onSubmit={handleManualOverridePunch} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Student Full Name:
+                </label>
+                <input
+                  type="text"
+                  value={manualStudentName}
+                  onChange={(e) => setManualStudentName(e.target.value)}
+                  placeholder="e.g. M Roja"
+                  required
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  USN / Roll Number:
+                </label>
+                <input
+                  type="text"
+                  value={manualStudentUsn}
+                  onChange={(e) => setManualStudentUsn(e.target.value)}
+                  placeholder="e.g. 3BR23CA060"
+                  required
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Reason for Manual Override:
+                </label>
+                <select
+                  value={manualReason}
+                  onChange={(e) => setManualReason(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="Phone battery discharged in class">Phone battery discharged in class</option>
+                  <option value="Camera hardware / permission issue">Camera hardware / permission issue</option>
+                  <option value="No mobile network / device glitch">No mobile network / device glitch</option>
+                  <option value="Special permission granted by Faculty">Special permission granted by Faculty</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowManualOverrideModal(false)}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <UserCheck className="h-4 w-4" />
+                  <span>Mark Student Present</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -23,7 +23,9 @@ import {
   RefreshCw,
   Eye,
   ShieldCheck,
-  FileUp
+  FileUp,
+  RotateCcw,
+  KeyRound
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
@@ -218,6 +220,8 @@ const calculateLiveStats = (currentUsers = null) => {
 export default function AdminDashboard() {
   const [stats, setStats] = useState(() => calculateLiveStats());
   const [users, setUsers] = useState([]);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [adminToast, setAdminToast] = useState('');
   const [settings, setSettings] = useState(() => {
     try {
       const stored = localStorage.getItem('geoattend_geofence_settings');
@@ -533,6 +537,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleResetPassword = async (studentId, studentName) => {
+    if (window.confirm(`Reset password for "${studentName}" to default "password123"?`)) {
+      try {
+        await axios.post(`${API_URL}/admin/users/${studentId}/reset-password`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err) {
+        // Ignored in offline/standalone mode
+      }
+      try {
+        const customUsers = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
+        const updated = customUsers.map(u => (u.id === studentId || u.name === studentName) ? { ...u, password: 'password123' } : u);
+        localStorage.setItem('geoattend_custom_users', JSON.stringify(updated));
+      } catch (e) {}
+      setAdminToast(`Password for "${studentName}" has been reset to "password123".`);
+      setTimeout(() => setAdminToast(''), 4500);
+    }
+  };
+
   const downloadSampleCsv = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Name,USN,Email,Department,Semester,Phone\n" +
@@ -810,9 +833,32 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* User List */}
               <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <div className="p-6 border-b border-gray-105 dark:border-gray-700">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Registered Users</h2>
+                <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Registered Users & Directory</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Manage students, biometrics, and credentials</p>
+                  </div>
+
+                  {/* Search bar */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-3.5 w-3.5" />
+                    <input
+                      type="text"
+                      placeholder="Search name, USN, email..."
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      className="pl-9 pr-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-56 text-gray-900 dark:text-white"
+                    />
+                  </div>
                 </div>
+
+                {adminToast && (
+                  <div className="mx-6 mt-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-800 dark:text-emerald-200 text-xs rounded-xl flex items-center justify-between">
+                    <span>✓ {adminToast}</span>
+                    <button onClick={() => setAdminToast('')} className="text-emerald-700 dark:text-emerald-300 font-bold ml-2">&times;</button>
+                  </div>
+                )}
+
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-900/50">
@@ -824,13 +870,24 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {(Array.isArray(users) ? users : []).map(u => (
+                      {(Array.isArray(users) ? users : [])
+                        .filter(u => {
+                          if (!userSearchQuery.trim()) return true;
+                          const q = userSearchQuery.trim().toLowerCase();
+                          return (
+                            (u.name && u.name.toLowerCase().includes(q)) ||
+                            (u.usn && u.usn.toLowerCase().includes(q)) ||
+                            (u.email && u.email.toLowerCase().includes(q)) ||
+                            (u.department && u.department.toLowerCase().includes(q))
+                          );
+                        })
+                        .map(u => (
                         <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                             <div>{u.name}</div>
                             {u.usn && <div className="text-xs text-gray-400 font-mono">USN: {u.usn}</div>}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-550 dark:text-gray-400">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             <span className="capitalize font-medium">{u.role}</span>
                             {u.role === 'student' && (
                               <span className={`ml-2 px-2 py-0.5 text-[10px] rounded-full font-semibold ${
@@ -842,17 +899,28 @@ export default function AdminDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-550 dark:text-gray-400">{u.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{u.email}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {u.role === 'student' && (
-                              <button
-                                onClick={() => handleDeleteStudent(u.id, u.name)}
-                                className="text-red-600 hover:text-red-950 dark:text-red-400 dark:hover:text-red-300 transition-colors cursor-pointer"
-                                title="Delete Student"
-                              >
-                                <Trash2 className="h-5 w-5 inline" />
-                              </button>
-                            )}
+                            <div className="flex items-center justify-end gap-2">
+                              {u.role === 'student' && (
+                                <>
+                                  <button
+                                    onClick={() => handleResetPassword(u.id, u.name)}
+                                    className="p-1.5 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                                    title="Reset Password to 'password123'"
+                                  >
+                                    <KeyRound className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteStudent(u.id, u.name)}
+                                    className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                                    title="Delete Student Profile"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}

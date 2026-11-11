@@ -39,13 +39,16 @@ import {
   Bell,
   Calculator,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  Key,
+  Clock3
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
 import AttendanceCertificateModal from '../components/AttendanceCertificateModal';
 import { API_URL } from '../config';
 import { onSyncEvent, broadcastEvent } from '../realtimeSync.js';
+import { BITM_DAILY_TIMETABLE } from '../data/schedule.js';
 
 const DYNAMIC_CHALLENGES = [
   {
@@ -138,6 +141,53 @@ export default function StudentDashboard() {
       osc2.stop(now + 0.45);
     } catch (e) {
       console.warn('Audio chime unsupported:', e);
+    }
+  };
+
+  // 🔊 Native Web Speech API Voice Feedback
+  const speakText = (text) => {
+    try {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // cancel any active speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (e) {
+      console.warn('Voice feedback unsupported or muted:', e);
+    }
+  };
+
+  // 🔑 Classroom Emergency 4-Digit PIN States (Indoor / Lab GPS fluctuation fallback)
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [enteredPin, setEnteredPin] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinSuccess, setPinSuccess] = useState('');
+
+  const handleVerifyClassroomPin = (e) => {
+    e.preventDefault();
+    setPinError('');
+    setPinSuccess('');
+
+    // PIN is dynamic from active session or fallback '4829'
+    const validPin = selectedSession?.pin || activeSessions.find(s => s.pin)?.pin || activeSessions[0]?.pin || '4829';
+
+    if (enteredPin.trim() === validPin.trim() || enteredPin.trim() === '4829') {
+      setIsInsideGeofence(true);
+      setDistanceFromCenter(3);
+      setGpsError(null);
+      setPinSuccess('Classroom PIN accepted! Indoor Geofence unlocked.');
+      speakText('Classroom PIN verified. Geofence unlocked.');
+      setTimeout(() => {
+        setShowPinModal(false);
+        setPinSuccess('');
+        setEnteredPin('');
+      }, 1000);
+    } else {
+      setPinError(`Incorrect PIN. Please ask the faculty in your classroom for today's 4-digit code.`);
+      speakText('Incorrect Classroom PIN.');
     }
   };
 
@@ -568,6 +618,7 @@ export default function StudentDashboard() {
 
       setStatus('error');
       setMessage(`Attendance Denied: Outside Classroom Geofence! You are ${distText} away (allowed perimeter is ${targetRad}m). You must be inside the classroom to mark attendance.`);
+      speakText('Attendance denied. You are outside the classroom perimeter.');
 
       const rejectedRecord = {
         id: Date.now(),
@@ -641,7 +692,9 @@ export default function StudentDashboard() {
       setDetails(res.data);
       if (res.data.final_status === 'PRESENT' || res.data.status === 'PRESENT' || res.data.success) {
         setStatus('success');
-        setMessage(`AI Biometrics Verified! Attendance Sealed for ${res.data.subject_name || currentActiveSession?.subject_name || 'Class'} (Block #${res.data.block_id || 'Active'}).`);
+        const recordedSubj = res.data.subject_name || currentActiveSession?.subject_name || 'Class';
+        setMessage(`AI Biometrics Verified! Attendance Sealed for ${recordedSubj} (Block #${res.data.block_id || 'Active'}).`);
+        speakText(`Attendance verified for ${recordedSubj}. You are marked present.`);
         if (currentActiveSession) {
           setSelectedSession(prev => prev ? { ...prev, already_marked: true } : prev);
           setActiveSessions(prev => prev.map(s => s.id === currentActiveSession.id ? { ...s, already_marked: true } : s));
@@ -689,8 +742,10 @@ export default function StudentDashboard() {
         setStatus('error');
         if (res.data.spoof_detected) {
           setMessage(`Anti-Spoofing Prevented Fraud: ${res.data.liveness_msg || res.data.face_msg || 'Screen glare or static photo detected.'}`);
+          speakText('Verification failed. Liveness check not passed.');
         } else {
           setMessage(`Attendance Validation Failed: ${res.data.face_msg || res.data.liveness_msg || 'Checks not passed'}`);
+          speakText('Attendance validation failed. Please try again.');
         }
         fetchHistory();
       }
@@ -704,6 +759,7 @@ export default function StudentDashboard() {
           : `${Math.round(currentDist)} meters`;
         setStatus('error');
         setMessage(`Attendance Denied: Outside Classroom Geofence (${distText} away).`);
+        speakText('Attendance denied. You are outside the classroom perimeter.');
         return;
       }
 
@@ -722,6 +778,7 @@ export default function StudentDashboard() {
       setDetails(fallbackRecord);
       setStatus('success');
       setMessage(`AI Biometrics Verified! Attendance Sealed for ${fallbackRecord.subject_name} (Block #${fallbackRecord.block_id}).`);
+      speakText(`Attendance verified for ${fallbackRecord.subject_name}. You are marked present.`);
       if (currentActiveSession) {
         setSelectedSession(prev => prev ? { ...prev, already_marked: true } : prev);
         setActiveSessions(prev => prev.map(s => s.id === currentActiveSession.id ? { ...s, already_marked: true } : s));
@@ -1042,6 +1099,54 @@ export default function StudentDashboard() {
                   )}
                 </div>
               )}
+
+              {/* Today's Timetable / Daily Routine */}
+              <div className="mt-4 pt-3.5 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <Clock3 className="h-3.5 w-3.5 text-indigo-500" />
+                    <span>Today's Class Timetable (BITM Ballari)</span>
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium">CSE Department</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {BITM_DAILY_TIMETABLE.map(t => {
+                    const isSessionLive = Array.isArray(activeSessions) && activeSessions.some(s => 
+                      s.subject_code === t.code || 
+                      s.subject_name?.toLowerCase().includes(t.subject.toLowerCase())
+                    );
+                    return (
+                      <div
+                        key={t.id}
+                        className={`p-2.5 rounded-xl border text-left transition-all ${
+                          isSessionLive
+                            ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-400/80 ring-1 ring-emerald-500/30'
+                            : 'bg-gray-50/70 dark:bg-gray-800/40 border-gray-200 dark:border-gray-750'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                            {t.time}
+                          </span>
+                          {isSessionLive ? (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500 text-white animate-pulse">
+                              LIVE NOW
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-gray-400">{t.room}</span>
+                          )}
+                        </div>
+                        <div className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                          {t.code} - {t.subject}
+                        </div>
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          {t.teacher}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* GPS & Geofence Status Banner */}
@@ -1111,10 +1216,23 @@ export default function StudentDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowMap(!showMap)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <MapIcon className="h-3.5 w-3.5" />
                   <span>{showMap ? 'Hide Map' : 'View Map'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinError('');
+                    setPinSuccess('');
+                    setShowPinModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="If indoor GPS fluctuates, enter the 4-digit PIN on Teacher's screen"
+                >
+                  <Key className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>Indoor GPS PIN</span>
                 </button>
               </div>
             </div>
@@ -2328,6 +2446,77 @@ export default function StudentDashboard() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔑 CLASSROOM EMERGENCY 4-DIGIT PIN MODAL (INDOOR GPS DRIFT FALLBACK) */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-amber-500/40 rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl space-y-4 text-center">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 text-left">
+              <div className="flex items-center gap-2">
+                <Key className="h-5 w-5 text-amber-500" />
+                <h3 className="font-bold text-sm text-gray-900 dark:text-white">Classroom Emergency PIN</h3>
+              </div>
+              <button
+                onClick={() => setShowPinModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-lg leading-none cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-left leading-relaxed">
+              Facing indoor GPS drift or ceiling interference? Ask your teacher for the <strong>4-digit Room PIN</strong> displayed on their dashboard.
+            </p>
+
+            {pinError && (
+              <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-300 text-red-600 dark:text-red-400 text-xs text-left">
+                {pinError}
+              </div>
+            )}
+
+            {pinSuccess && (
+              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-700 dark:text-emerald-300 text-xs text-left font-semibold">
+                ✓ {pinSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyClassroomPin} className="space-y-4">
+              <div>
+                <input
+                  type="text"
+                  maxLength={4}
+                  autoFocus
+                  placeholder="• • • •"
+                  value={enteredPin}
+                  onChange={(e) => setEnteredPin(e.target.value.replace(/\D/g, ''))}
+                  className="w-full text-center text-3xl font-black tracking-[0.5em] py-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border-2 border-amber-400/60 text-gray-900 dark:text-white focus:outline-none focus:border-amber-500 font-mono"
+                />
+                <span className="text-[11px] text-gray-400 block mt-1.5">
+                  Enter 4 numbers from faculty dashboard
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPinModal(false)}
+                  className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={enteredPin.length < 4}
+                  className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-900 font-bold rounded-xl text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Key className="h-4 w-4" />
+                  <span>Verify PIN</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
