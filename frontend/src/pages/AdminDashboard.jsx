@@ -32,7 +32,7 @@ import MapComponent from '../components/MapComponent';
 import Webcam from 'react-webcam';
 import { API_URL } from '../config';
 import { onSyncEvent, broadcastEvent } from '../realtimeSync.js';
-import { saveRegisteredStudentPhoto } from '../faceBiometrics';
+import { saveRegisteredStudentPhoto, getRegisteredStudentPhoto } from '../faceBiometrics';
 
 const DEFAULT_USERS = [
   { id: 1, name: "Super Admin", email: "admin@college.edu", role: "admin", department: "Administration", face_registered: true },
@@ -914,8 +914,23 @@ export default function AdminDashboard() {
                         .map(u => (
                         <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                            <div>{u.name}</div>
-                            {u.usn && <div className="text-xs text-gray-400 font-mono">USN: {u.usn}</div>}
+                            <div className="flex items-center gap-3">
+                              {getRegisteredStudentPhoto(u) ? (
+                                <img 
+                                  src={getRegisteredStudentPhoto(u)} 
+                                  alt={u.name} 
+                                  className="h-9 w-9 rounded-full object-cover border-2 border-emerald-500 shadow-sm flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 font-bold text-xs flex-shrink-0">
+                                  {u.name.charAt(0)}
+                                </div>
+                              )}
+                              <div>
+                                <div className="font-bold">{u.name}</div>
+                                {u.usn && <div className="text-xs text-gray-400 font-mono">USN: {u.usn}</div>}
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             <span className="capitalize font-medium">{u.role}</span>

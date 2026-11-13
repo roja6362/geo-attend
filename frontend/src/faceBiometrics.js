@@ -2,6 +2,8 @@
 // Provides robust, translation-invariant facial feature extraction, face localization,
 // chromatic undertone profiling, 2D normalized cross-correlation, and 1-to-1 face verification.
 
+import { DEFAULT_STUDENT_PHOTOS } from './defaultStudentPhotos';
+
 export function extractFaceEmbedding(imageSrc) {
   return new Promise((resolve) => {
     if (!imageSrc) return resolve(null);
@@ -321,6 +323,15 @@ export function getRegisteredStudentPhoto(user) {
         if (byMatchId && byMatchId.startsWith('data:image')) return byMatchId;
       }
     }
+  } catch (e) {}
+
+  // 3. Pre-registered student profiles (Admin registered reference templates)
+  try {
+    const cleanEmail = (user.email || '').toLowerCase().trim();
+    if (cleanEmail.includes('rahul') || cleanEmail === 'student@college.edu') return DEFAULT_STUDENT_PHOTOS.rahul;
+    if (cleanEmail.includes('ananya')) return DEFAULT_STUDENT_PHOTOS.ananya;
+    if (cleanEmail.includes('spoorthi')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
+    if (cleanEmail.includes('manisha')) return DEFAULT_STUDENT_PHOTOS.manisha;
   } catch (e) {}
 
   return null;
