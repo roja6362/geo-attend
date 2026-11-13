@@ -1584,7 +1584,7 @@ export default function StudentDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Webcam Video Container (7 cols) */}
               <div className="lg:col-span-7 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
-                <div className="p-3.5 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                     <h3 className="font-semibold text-xs sm:text-sm text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
@@ -1592,15 +1592,46 @@ export default function StudentDashboard() {
                       <span>Live Camera</span>
                     </h3>
                   </div>
-                  {/* Camera Flip Button for mobile smartphones */}
-                  <button
-                    onClick={toggleCamera}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                    title="Switch Front/Back Camera"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    <span>Flip ({facingMode === 'user' ? 'Front' : 'Back'})</span>
-                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {/* Reference Face Thumbnail & Enrolled Status */}
+                    {getRegisteredStudentPhoto(user) ? (
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-700 dark:text-emerald-300">
+                        <img 
+                          src={getRegisteredStudentPhoto(user)} 
+                          alt="Enrolled" 
+                          className="h-5 w-5 rounded-full object-cover border border-emerald-400"
+                        />
+                        <span className="hidden sm:inline font-semibold">Ref Enrolled</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowFaceModal(true)}
+                          className="text-[10px] underline font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-950 cursor-pointer ml-0.5"
+                        >
+                          Update
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowFaceModal(true)}
+                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer animate-pulse"
+                      >
+                        <Camera className="h-3 w-3" />
+                        <span>Enroll Face</span>
+                      </button>
+                    )}
+
+                    {/* Camera Flip Button for mobile smartphones */}
+                    <button
+                      onClick={toggleCamera}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                      title="Switch Front/Back Camera"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Flip ({facingMode === 'user' ? 'Front' : 'Back'})</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="relative aspect-video sm:aspect-[4/3] bg-black flex items-center justify-center overflow-hidden">
