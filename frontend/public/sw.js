@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v33-verified-face-recognition';
+const CACHE_NAME = 'geo-attend-v34-universal-student-biometrics';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

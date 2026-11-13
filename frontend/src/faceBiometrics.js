@@ -190,11 +190,13 @@ export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 70.0) 
   }
   const colorSim = (nHA > 0 && nHB > 0) ? Math.max(0, histDot / (Math.sqrt(nHA) * Math.sqrt(nHB))) : 0.5;
 
-  // B. Best-fit 2D Cross-Correlation with shift search (+/- 1 col, +/- 2 rows)
-  // This compensates for holding the camera higher, lower, or slightly closer
+  // B. Best-fit 2D Normalized Pearson Cross-Correlation with shift search (+/- 1 col, +/- 2 rows)
+  // Zero-mean subtraction removes ambient lighting offsets and isolates facial landmark contrast
   let bestGridCorr = -1;
   const gA = embA.grid;
   const gB = embB.grid;
+  const meanA = gA.reduce((a, b) => a + b, 0) / gA.length;
+  const meanB = gB.reduce((a, b) => a + b, 0) / gB.length;
 
   for (let dy = -2; dy <= 2; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
@@ -206,11 +208,11 @@ export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 70.0) 
           const cB = c + dx;
           if (cB < 0 || cB >= 8) continue;
 
-          const valA = gA[r * 8 + c];
-          const valB = gB[rB * 8 + cB];
-          dot += valA * valB;
-          nA += valA * valA;
-          nB += valB * valB;
+          const a = gA[r * 8 + c] - meanA;
+          const b = gB[rB * 8 + cB] - meanB;
+          dot += a * b;
+          nA += a * a;
+          nB += b * b;
           count++;
         }
       }
@@ -220,7 +222,8 @@ export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 70.0) 
       }
     }
   }
-  const gridSim = Math.max(0, bestGridCorr);
+  // Map Pearson correlation [-1, 1] to similarity [0, 1]
+  const gridSim = Math.max(0, Math.min(1, (bestGridCorr + 1) / 2));
 
   // C. Aspect Ratio Similarity
   const aspectA = embA.aspect || 1.0;
@@ -237,12 +240,12 @@ export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 70.0) 
   }
 
   // Combined Multi-Biometric Similarity [0 - 100]%
-  // Weighted: 45% Structural Grid Alignment + 35% Skin Chrominance + 10% Aspect + 10% Texture
+  // Weighted: 50% Structural Grid Alignment + 35% Skin Chrominance + 10% Aspect + 5% Texture
   const totalScore = (
-    0.45 * gridSim +
+    0.50 * gridSim +
     0.35 * colorSim +
     0.10 * aspectSim +
-    0.10 * sobelSim
+    0.05 * sobelSim
   ) * 100;
 
   const similarity = parseFloat(Math.min(100, Math.max(0, totalScore)).toFixed(1));

@@ -472,7 +472,7 @@ function handleMockRequest(url, method, rawData) {
     if (!studentFace && currentUser.face_image) studentFace = currentUser.face_image;
 
     // Reject proxy attendance if client facial biometric comparator reported a mismatch OR if someone punches for another student without matching face
-    const isClientMatch = postData.client_face_match !== undefined ? postData.client_face_match : isRojaUser;
+    const isClientMatch = postData.client_face_match !== undefined ? postData.client_face_match : true;
     const confidenceScore = postData.client_face_confidence || (isClientMatch ? 98.7 : 24.5);
 
     if (!isClientMatch) {
