@@ -44,7 +44,8 @@ import {
   TrendingUp,
   CheckCircle2,
   Key,
-  Clock3
+  Clock3,
+  Lock
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
