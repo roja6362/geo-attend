@@ -111,28 +111,73 @@ export default function Login() {
             department: "Computer Science"
           };
         } else {
-          if (cleanEmail.includes('rahul') || cleanEmail === 'student@college.edu') {
-            simulatedUser = {
-              id: 3,
-              name: "Rahul Sharma",
-              email: "student@college.edu",
-              role: "student",
-              roll_no: "CS2024001",
-              department: "Computer Science",
-              semester: 5
-            };
-          } else {
+          if (cleanEmail.includes('roja') || cleanEmail === 'thimmareddym4@gmail.com') {
             simulatedUser = {
               id: 13,
               name: "M Roja",
-              email: cleanEmail || "thimmareddym4@gmail.com",
+              email: "thimmareddym4@gmail.com",
               role: "student",
               usn: "3BR23CA060",
               roll_no: "3BR23CA060",
               department: "Computer Science (AI & ML)",
               semester: 7
             };
+          } else if (cleanEmail.includes('rahul') || cleanEmail === 'student@college.edu') {
+            simulatedUser = {
+              id: 3,
+              name: "Rahul Sharma",
+              email: "student@college.edu",
+              role: "student",
+              roll_no: "CS2024001",
+              usn: "CS2024001",
+              department: "Computer Science",
+              semester: 5
+            };
+          } else if (cleanEmail.includes('ananya')) {
+            simulatedUser = {
+              id: 4,
+              name: "Ananya Patel",
+              email: cleanEmail,
+              role: "student",
+              roll_no: "CS2024002",
+              usn: "CS2024002",
+              department: "Computer Science",
+              semester: 5
+            };
+          } else if (cleanEmail.includes('manisha')) {
+            simulatedUser = {
+              id: 5,
+              name: "Manisha",
+              email: cleanEmail,
+              role: "student",
+              roll_no: "CS2024005",
+              usn: "CS2024005",
+              department: "Computer Science",
+              semester: 5
+            };
+          } else {
+            const displayName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            simulatedUser = {
+              id: Date.now(),
+              name: displayName || "Student",
+              email: cleanEmail,
+              role: "student",
+              roll_no: "CS" + Math.floor(1000 + Math.random() * 9000),
+              usn: "CS" + Math.floor(1000 + Math.random() * 9000),
+              department: "Computer Science",
+              semester: 5
+            };
           }
+        }
+      }
+
+      if (simulatedUser) {
+        const storedPhoto = localStorage.getItem(`geoattend_face_${simulatedUser.id}`) || 
+                            localStorage.getItem(`geoattend_face_${cleanEmail}`) ||
+                            (simulatedUser.usn ? localStorage.getItem(`geoattend_face_${simulatedUser.usn.toLowerCase()}`) : null);
+        if (storedPhoto) {
+          simulatedUser.face_image = storedPhoto;
+          simulatedUser.face_registered = true;
         }
       }
 

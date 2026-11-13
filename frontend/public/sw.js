@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v30-anti-proxy';
+const CACHE_NAME = 'geo-attend-v31-photo-verification';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

@@ -243,9 +243,15 @@ function handleMockRequest(url, method, rawData) {
       department: postData.department || "Computer Science",
       semester: postData.semester || "1",
       password: postData.password || "password123",
-      face_registered: true
+      face_registered: !!(postData.face_image || postData.image),
+      face_image: postData.face_image || postData.image || null
     };
     try {
+      if (newStudent.face_image) {
+        localStorage.setItem(`geoattend_face_${newStudent.id}`, newStudent.face_image);
+        if (newStudent.email) localStorage.setItem(`geoattend_face_${newStudent.email}`, newStudent.face_image);
+        if (newStudent.usn) localStorage.setItem(`geoattend_face_${newStudent.usn.toLowerCase()}`, newStudent.face_image);
+      }
       const existing = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
       const filtered = existing.filter(u => u.email.toLowerCase() !== newStudent.email.toLowerCase());
       filtered.push(newStudent);
@@ -446,8 +452,11 @@ function handleMockRequest(url, method, rawData) {
     if (!studentFace && currentUser.email) studentFace = localStorage.getItem(`geoattend_face_${currentUser.email.toLowerCase()}`);
     if (!studentFace && currentUser.face_image) studentFace = currentUser.face_image;
 
-    // Reject proxy attendance if another student is logged in and Roja's face is used
-    if (!isRojaUser && !studentFace) {
+    // Reject proxy attendance if client facial biometric comparator reported a mismatch OR if someone punches for another student without matching face
+    const isClientMatch = postData.client_face_match !== undefined ? postData.client_face_match : isRojaUser;
+    const confidenceScore = postData.client_face_confidence || (isClientMatch ? 98.7 : 24.5);
+
+    if (!isClientMatch) {
       const rejectRecord = {
         id: Date.now(),
         student_id: currentUser.id || 3,
@@ -463,8 +472,8 @@ function handleMockRequest(url, method, rawData) {
         final_status: "REJECTED",
         face_verified: false,
         face_match: false,
-        face_confidence: 22.4,
-        similarity_score: 22.4,
+        face_confidence: confidenceScore,
+        similarity_score: confidenceScore,
         geo_verified: true,
         inside_geofence: true,
         distance: 8.5,
@@ -475,7 +484,7 @@ function handleMockRequest(url, method, rawData) {
         proxy_detected: true,
         is_verified: false,
         verification_method: "Biometric AI (Proxy Rejection)",
-        rejection_reason: `Proxy attendance blocked: Live face belongs to Roja M (3BR23CA060), but this session is for ${studentName}. Buddy punching rejected.`
+        rejection_reason: `Biometric mismatch: Live selfie (${confidenceScore}% similarity) does not match the registered student photo for ${studentName}. Proxy attendance rejected.`
       };
 
       try {
@@ -498,14 +507,14 @@ function handleMockRequest(url, method, rawData) {
         final_status: "REJECTED",
         status: "REJECTED",
         face_match: false,
-        face_confidence: 22.4,
+        face_confidence: confidenceScore,
         liveness_passed: true,
         liveness_score: 99.4,
         inside_geofence: true,
         distance: 8.5,
         proxy_detected: true,
         subject_name: subjectName,
-        face_msg: `Biometric Mismatch: Live face does NOT match the registered student photo for ${studentName}! (Live face identified as Roja M, USN: 3BR23CA060). Proxy attendance blocked.`,
+        face_msg: `Biometric Mismatch: Live face does NOT match the registered student photo for ${studentName}! (Similarity: ${confidenceScore}% < 70% required). Proxy attendance blocked.`,
         message: `Proxy Attendance Blocked: Live face does not match ${studentName}!`,
         record: rejectRecord
       };

@@ -31,9 +31,19 @@ def register():
         department=data.get('department'),
         semester=data.get('semester'),
         phone_number=data.get('phone_number'),
-        # face_encoding will be updated later in a separate step or included here if base64 provided
     )
     
+    image = data.get('image') or data.get('face_image')
+    if image:
+        try:
+            from face_module import get_face_encoding
+            import json
+            embedding, msg = get_face_encoding(image, email)
+            if embedding:
+                new_user.face_encoding = json.dumps(embedding)
+        except Exception as e:
+            print("Face encoding extraction warning:", e)
+            
     db.session.add(new_user)
     db.session.commit()
     
