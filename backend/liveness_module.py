@@ -168,7 +168,7 @@ def verify_liveness(curr_base64, prev_base64=None, challenge_type='auto'):
     # 3. Dynamic Action Challenge Evaluation (Instant mode bypasses action gestures)
     face_roi_gray = gray_curr[fy:fy + fh, fx:fx + fw]
 
-    if challenge_type in ['instant', 'direct', 'none', 'blink', 'auto']:
+    if challenge_type in ['instant', 'direct', 'none', 'auto']:
         # 1-Tap Instant mode: No gesture delays needed, verified via face & passive anti-spoof
         challenge_passed = True
         challenge_details = "Instant Face Biometrics Verified ✓"
@@ -188,17 +188,13 @@ def verify_liveness(curr_base64, prev_base64=None, challenge_type='auto'):
             challenge_details = "Please smile clearly for liveness verification"
 
     elif challenge_type == 'blink':
-        # Detect eyes in upper face
-        upper_face = face_roi_gray[:int(fh * 0.65), :]
-        eyes = eye_cascade.detectMultiScale(upper_face, scaleFactor=1.15, minNeighbors=3, minSize=(20, 20))
-        
         # When blinking occurs between frames, motion score on eyes changes significantly
-        if motion_score > 0.8 or len(eyes) >= 1:
+        if motion_score >= 0.8:
             challenge_passed = True
-            challenge_details = "Blink / Eye activity verified ✓"
+            challenge_details = f"Eye blink motion verified ✓ (Delta: {motion_score:.2f})"
         else:
             challenge_passed = False
-            challenge_details = "Please blink eyes naturally"
+            challenge_details = "No eye blink detected. Please blink naturally to confirm liveness."
 
     elif challenge_type in ['turn', 'turn_left', 'turn_right']:
         if motion_score > 1.2:
