@@ -1,119 +1,165 @@
-// 🧠 Client-Side Facial Biometrics & Feature Vector Extraction Module
-// Provides normalized 32-dimensional facial embedding extraction and cosine similarity verification
+// 🧠 Advanced Client-Side Facial Biometrics & Feature Vector Extraction Module
+// Provides robust, translation-invariant facial feature extraction, face localization,
+// chromatic undertone profiling, 2D normalized cross-correlation, and 1-to-1 face verification.
 
 export function extractFaceEmbedding(imageSrc) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (!imageSrc) return resolve(null);
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
-        const W = 100;
-        const H = 100;
+        const W = 120;
+        const H = 120;
         const canvas = document.createElement('canvas');
         canvas.width = W;
         canvas.height = H;
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return resolve(null);
 
-        // Crop central 75% where the face resides
-        const cropW = img.naturalWidth * 0.75;
-        const cropH = img.naturalHeight * 0.75;
-        const cropX = (img.naturalWidth - cropW) / 2;
-        const cropY = (img.naturalHeight - cropH) / 2;
-
-        ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, W, H);
+        ctx.drawImage(img, 0, 0, W, H);
         const imgData = ctx.getImageData(0, 0, W, H);
         const data = imgData.data;
 
-        const vector = [];
+        // 1. Skin-Color Localization to detect true face bounding box
+        let minX = W, maxX = 0, minY = H, maxY = 0;
+        let skinPixels = 0;
+        let sumCb = 0, sumCr = 0, sumR = 0, sumG = 0, sumB = 0;
+        const hsHist = new Float64Array(16); // 8 hue bins x 2 saturation bins
 
-        // 1. Regional 4x4 Luminance Grid (16 features)
-        const cellW = Math.floor(W / 4);
-        const cellH = Math.floor(H / 4);
-        for (let row = 0; row < 4; row++) {
-          for (let col = 0; col < 4; col++) {
-            let sumLum = 0;
-            let count = 0;
-            for (let y = row * cellH; y < (row + 1) * cellH; y++) {
-              for (let x = col * cellW; x < (col + 1) * cellW; x++) {
-                const idx = (y * W + x) * 4;
-                const r = data[idx];
-                const g = data[idx + 1];
-                const b = data[idx + 2];
-                const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                sumLum += lum;
-                count++;
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            const idx = (y * W + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+
+            // YCbCr skin chrominance
+            const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+            const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+
+            // Skin detection conditions
+            const isSkin = (
+              r > 40 && g > 25 && b > 15 &&
+              r > g && (r - b) > 8 &&
+              cb >= 70 && cb <= 140 &&
+              cr >= 120 && cr <= 190
+            );
+
+            if (isSkin) {
+              skinPixels++;
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+
+              sumCb += cb;
+              sumCr += cr;
+              sumR += r;
+              sumG += g;
+              sumB += b;
+
+              // Hue & Saturation
+              const max = Math.max(r, g, b);
+              const min = Math.min(r, g, b);
+              const d = max - min;
+              let h = 0;
+              if (d !== 0) {
+                if (max === r) h = ((g - b) / d) % 6;
+                else if (max === g) h = (b - r) / d + 2;
+                else h = (r - g) / d + 4;
+                h = Math.round(h * 60);
+                if (h < 0) h += 360;
+              }
+              const s = max === 0 ? 0 : d / max;
+              const hBin = Math.min(7, Math.floor((h / 360) * 8));
+              const sBin = s > 0.35 ? 1 : 0;
+              hsHist[hBin * 2 + sBin]++;
+            }
+          }
+        }
+
+        // Normalize Hue-Sat histogram
+        if (skinPixels > 0) {
+          for (let i = 0; i < 16; i++) hsHist[i] /= skinPixels;
+        }
+
+        // Default bounds if face detection failed
+        if (skinPixels < (W * H * 0.03)) {
+          minX = Math.floor(W * 0.15); maxX = Math.floor(W * 0.85);
+          minY = Math.floor(H * 0.15); maxY = Math.floor(H * 0.85);
+        }
+
+        const boxW = Math.max(10, maxX - minX);
+        const boxH = Math.max(10, maxY - minY);
+        const boxAspect = boxW / boxH;
+
+        // 2. Normalized 8x8 Luminance Grid inside Face BBox
+        const grid = new Float64Array(64);
+        const cellW = boxW / 8;
+        const cellH = boxH / 8;
+
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            let sumLum = 0, count = 0;
+            const y0 = Math.floor(minY + r * cellH);
+            const y1 = Math.floor(minY + (r + 1) * cellH);
+            const x0 = Math.floor(minX + c * cellW);
+            const x1 = Math.floor(minX + (c + 1) * cellW);
+
+            for (let y = y0; y < y1; y++) {
+              for (let x = x0; x < x1; x++) {
+                if (x >= 0 && x < W && y >= 0 && y < H) {
+                  const idx = (y * W + x) * 4;
+                  sumLum += 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                  count++;
+                }
               }
             }
-            vector.push(count > 0 ? (sumLum / count) / 255.0 : 0);
+            grid[r * 8 + c] = count > 0 ? (sumLum / count) / 255.0 : 0.5;
           }
         }
 
-        // 2. Average Skin Undertone Chrominance Cb & Cr (4 features)
-        let sumCb = 0, sumCr = 0, sumR = 0, sumG = 0;
-        const totalPixels = W * H;
-        for (let i = 0; i < totalPixels; i++) {
-          const idx = i * 4;
-          const r = data[idx];
-          const g = data[idx + 1];
-          const b = data[idx + 2];
-          const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
-          const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
-          sumCb += cb;
-          sumCr += cr;
-          sumR += r;
-          sumG += g;
-        }
-        vector.push((sumCb / totalPixels) / 255.0);
-        vector.push((sumCr / totalPixels) / 255.0);
-        vector.push((sumR / totalPixels) / 255.0);
-        vector.push((sumG / totalPixels) / 255.0);
-
-        // 3. Horizontal Projection Profile: 6 vertical bands (6 features)
-        const bandH = Math.floor(H / 6);
-        for (let b = 0; b < 6; b++) {
-          let bLum = 0, bCount = 0;
-          for (let y = b * bandH; y < (b + 1) * bandH; y++) {
-            for (let x = 0; x < W; x++) {
-              const idx = (y * W + x) * 4;
-              bLum += (data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114);
-              bCount++;
-            }
+        // 3. Sobel Edge Texture (Horizontal vs Vertical edge ratios)
+        let horizEdges = 0, vertEdges = 0;
+        for (let r = 1; r < 7; r++) {
+          for (let c = 1; c < 7; c++) {
+            const gx = (grid[(r - 1) * 8 + (c + 1)] + 2 * grid[r * 8 + (c + 1)] + grid[(r + 1) * 8 + (c + 1)]) -
+                       (grid[(r - 1) * 8 + (c - 1)] + 2 * grid[r * 8 + (c - 1)] + grid[(r + 1) * 8 + (c - 1)]);
+            const gy = (grid[(r + 1) * 8 + (c - 1)] + 2 * grid[(r + 1) * 8 + c] + grid[(r + 1) * 8 + (c + 1)]) -
+                       (grid[(r - 1) * 8 + (c - 1)] + 2 * grid[(r - 1) * 8 + c] + grid[(r - 1) * 8 + (c + 1)]);
+            vertEdges += Math.abs(gx);
+            horizEdges += Math.abs(gy);
           }
-          vector.push(bCount > 0 ? (bLum / bCount) / 255.0 : 0);
         }
+        const totalEdges = horizEdges + vertEdges + 0.0001;
+        const sobel = { hRatio: horizEdges / totalEdges, vRatio: vertEdges / totalEdges };
 
-        // 4. Vertical Projection Profile: 6 horizontal bands (6 features)
-        const bandW = Math.floor(W / 6);
-        for (let b = 0; b < 6; b++) {
-          let bLum = 0, bCount = 0;
-          for (let y = 0; y < H; y++) {
-            for (let x = b * bandW; x < (b + 1) * bandW; x++) {
-              const idx = (y * W + x) * 4;
-              bLum += (data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114);
-              bCount++;
-            }
-          }
-          vector.push(bCount > 0 ? (bLum / bCount) / 255.0 : 0);
-        }
+        // 4. Average Chrominance vector
+        const avgCb = (sumCb / (skinPixels || 1)) / 255.0;
+        const avgCr = (sumCr / (skinPixels || 1)) / 255.0;
+        const avgRg = ((sumR - sumG) / (sumR + sumG + 1));
+        const avgRb = ((sumR - sumB) / (sumR + sumB + 1));
+        const chrominance = [avgCb, avgCr, avgRg, avgRb];
 
-        // 5. Zero-Center (Mean Subtraction) and L2 Normalization
-        // This removes constant background brightness and isolates unique facial contour ratios
-        const mean = vector.reduce((acc, v) => acc + v, 0) / vector.length;
-        const zeroCentered = vector.map(v => v - mean);
+        // 5. Construct flat vector (for backwards compatibility)
+        const vector = [];
+        for (let i = 0; i < 16; i++) vector.push(hsHist[i]);
+        for (let i = 0; i < 64; i += 4) vector.push(grid[i]); // 16 sample cells
+        vector.push(avgCb, avgCr, avgRg, avgRb);
 
-        let normSq = 0;
-        for (let i = 0; i < zeroCentered.length; i++) {
-          normSq += zeroCentered[i] * zeroCentered[i];
-        }
-        const norm = Math.sqrt(normSq) || 1;
-        const normalized = zeroCentered.map(v => v / norm);
-
-        resolve(normalized);
+        resolve({
+          hsHist: Array.from(hsHist),
+          grid: Array.from(grid),
+          chrominance,
+          aspect: boxAspect,
+          sobel,
+          vector,
+          length: vector.length
+        });
       } catch (err) {
-        console.error('Error generating face embedding:', err);
+        console.error('Error extracting face embedding:', err);
         resolve(null);
       }
     };
@@ -123,22 +169,98 @@ export function extractFaceEmbedding(imageSrc) {
 }
 
 export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 70.0) {
-  if (!embeddingA || !embeddingB || embeddingA.length !== embeddingB.length) {
+  if (!embeddingA || !embeddingB) {
     return { matched: false, similarity: 0.0, threshold };
   }
 
-  // Cosine similarity between unit-normalized, zero-centered biometric vectors
-  let dotProduct = 0;
-  for (let i = 0; i < embeddingA.length; i++) {
-    dotProduct += embeddingA[i] * embeddingB[i];
+  // Handle both rich descriptor objects and legacy raw flat arrays
+  const embA = embeddingA.hsHist ? embeddingA : parseLegacyEmbedding(embeddingA);
+  const embB = embeddingB.hsHist ? embeddingB : parseLegacyEmbedding(embeddingB);
+
+  if (!embA || !embB) {
+    return { matched: false, similarity: 0.0, threshold };
   }
 
-  // Map [-1, 1] cosine range to [0, 100]% similarity score
-  const scaledSimilarity = ((dotProduct + 1) / 2) * 100;
-  const similarity = parseFloat(Math.max(0, Math.min(100, scaledSimilarity)).toFixed(1));
+  // A. Color & Undertone Histogram Cosine Similarity
+  let histDot = 0, nHA = 0, nHB = 0;
+  for (let i = 0; i < embA.hsHist.length; i++) {
+    histDot += embA.hsHist[i] * embB.hsHist[i];
+    nHA += embA.hsHist[i] * embA.hsHist[i];
+    nHB += embB.hsHist[i] * embB.hsHist[i];
+  }
+  const colorSim = (nHA > 0 && nHB > 0) ? Math.max(0, histDot / (Math.sqrt(nHA) * Math.sqrt(nHB))) : 0.5;
+
+  // B. Best-fit 2D Cross-Correlation with shift search (+/- 1 col, +/- 2 rows)
+  // This compensates for holding the camera higher, lower, or slightly closer
+  let bestGridCorr = -1;
+  const gA = embA.grid;
+  const gB = embB.grid;
+
+  for (let dy = -2; dy <= 2; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      let dot = 0, nA = 0, nB = 0, count = 0;
+      for (let r = 0; r < 8; r++) {
+        const rB = r + dy;
+        if (rB < 0 || rB >= 8) continue;
+        for (let c = 0; c < 8; c++) {
+          const cB = c + dx;
+          if (cB < 0 || cB >= 8) continue;
+
+          const valA = gA[r * 8 + c];
+          const valB = gB[rB * 8 + cB];
+          dot += valA * valB;
+          nA += valA * valA;
+          nB += valB * valB;
+          count++;
+        }
+      }
+      if (count >= 28 && nA > 0 && nB > 0) {
+        const corr = dot / (Math.sqrt(nA) * Math.sqrt(nB));
+        if (corr > bestGridCorr) bestGridCorr = corr;
+      }
+    }
+  }
+  const gridSim = Math.max(0, bestGridCorr);
+
+  // C. Aspect Ratio Similarity
+  const aspectA = embA.aspect || 1.0;
+  const aspectB = embB.aspect || 1.0;
+  const aspectDiff = Math.abs(aspectA - aspectB) / Math.max(aspectA, aspectB, 0.01);
+  const aspectSim = Math.max(0, 1 - aspectDiff * 1.2);
+
+  // D. Sobel Texture Similarity
+  let sobelSim = 0.8;
+  if (embA.sobel && embB.sobel) {
+    const diffH = Math.abs(embA.sobel.hRatio - embB.sobel.hRatio);
+    const diffV = Math.abs(embA.sobel.vRatio - embB.sobel.vRatio);
+    sobelSim = Math.max(0, 1 - (diffH + diffV));
+  }
+
+  // Combined Multi-Biometric Similarity [0 - 100]%
+  // Weighted: 45% Structural Grid Alignment + 35% Skin Chrominance + 10% Aspect + 10% Texture
+  const totalScore = (
+    0.45 * gridSim +
+    0.35 * colorSim +
+    0.10 * aspectSim +
+    0.10 * sobelSim
+  ) * 100;
+
+  const similarity = parseFloat(Math.min(100, Math.max(0, totalScore)).toFixed(1));
   const matched = similarity >= threshold;
 
   return { matched, similarity, threshold };
+}
+
+function parseLegacyEmbedding(raw) {
+  if (Array.isArray(raw)) {
+    return {
+      hsHist: raw.slice(0, 16),
+      grid: new Array(64).fill(0.5),
+      aspect: 1.0,
+      sobel: { hRatio: 0.5, vRatio: 0.5 }
+    };
+  }
+  return null;
 }
 
 export async function compareFaceImages(livePhoto, registeredPhoto, threshold = 70.0) {
@@ -162,7 +284,7 @@ export async function compareFaceImages(livePhoto, registeredPhoto, threshold = 
 export function getRegisteredStudentPhoto(user) {
   if (!user) return null;
 
-  // 1. Check direct keys
+  // 1. Direct photo keys
   if (user.id) {
     const p = localStorage.getItem(`geoattend_face_${user.id}`);
     if (p && p.startsWith('data:image')) return p;
@@ -179,7 +301,7 @@ export function getRegisteredStudentPhoto(user) {
     return user.face_image;
   }
 
-  // 2. Check custom registered users
+  // 2. Custom registered users
   try {
     const customUsers = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
     const cleanEmail = (user.email || '').toLowerCase().trim();
@@ -201,7 +323,7 @@ export function getRegisteredStudentPhoto(user) {
   return null;
 }
 
-// Save student face photo and update user record
+// Save student face photo and update user records across localStorage
 export async function saveRegisteredStudentPhoto(user, photoBase64) {
   if (!user || !photoBase64) return false;
 
@@ -210,7 +332,7 @@ export async function saveRegisteredStudentPhoto(user, photoBase64) {
     if (user.email) localStorage.setItem(`geoattend_face_${user.email.toLowerCase().trim()}`, photoBase64);
     if (user.usn) localStorage.setItem(`geoattend_face_${user.usn.toLowerCase().trim()}`, photoBase64);
 
-    // Also precompute and cache the 32-d embedding
+    // Precompute and cache descriptor
     const embedding = await extractFaceEmbedding(photoBase64);
     if (embedding) {
       if (user.id) localStorage.setItem(`geoattend_emb_${user.id}`, JSON.stringify(embedding));

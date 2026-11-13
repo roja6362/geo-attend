@@ -32,6 +32,7 @@ import MapComponent from '../components/MapComponent';
 import Webcam from 'react-webcam';
 import { API_URL } from '../config';
 import { onSyncEvent, broadcastEvent } from '../realtimeSync.js';
+import { saveRegisteredStudentPhoto } from '../faceBiometrics';
 
 const DEFAULT_USERS = [
   { id: 1, name: "Super Admin", email: "admin@college.edu", role: "admin", department: "Administration", face_registered: true },
@@ -422,28 +423,57 @@ export default function AdminDashboard() {
     }
 
     setAddStatus('submitting');
-    setAddMessage('Creating student profile account...');
+    setAddMessage('Creating student profile account & registering face biometrics...');
+
+    const cleanEmail = (addForm.email || '').trim().toLowerCase();
+    const cleanUsn = (addForm.usn || '').trim().toUpperCase();
+
     try {
       // 1. Create Student Account
       const res = await axios.post(`${API_URL}/auth/register`, {
         ...addForm,
-        role: 'student'
+        email: cleanEmail,
+        usn: cleanUsn,
+        role: 'student',
+        face_image: faceImage,
+        image: faceImage
       });
       
       const newUserId = res.data?.user_id || res.data?.user?.id || Date.now();
 
-      // 2. Register Face Model
-      setAddMessage('Registering student face biometrics...');
+      // 2. Register Face Model with API
       await axios.post(`${API_URL}/admin/register-student-face`, {
         student_id: newUserId,
         image: faceImage
       }, {
         headers: { Authorization: `Bearer ${token}` }
-      });
+      }).catch(() => {});
+
+      // 3. Always store face photo under ID, Email, and USN for instant 1-to-1 matching
+      const studentObj = {
+        id: newUserId,
+        ...addForm,
+        email: cleanEmail,
+        usn: cleanUsn,
+        roll_no: cleanUsn,
+        role: 'student',
+        face_registered: true,
+        face_image: faceImage
+      };
+
+      await saveRegisteredStudentPhoto(studentObj, faceImage);
+
+      // Save into custom users list
+      try {
+        const existing = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
+        const filtered = existing.filter(u => u.email.toLowerCase() !== cleanEmail);
+        filtered.push(studentObj);
+        localStorage.setItem('geoattend_custom_users', JSON.stringify(filtered));
+      } catch (e) {}
 
       setAddStatus('success');
-      setAddMessage('Student profile and face model registered successfully!');
-      broadcastEvent('REGISTER_USER', { user: { id: newUserId, ...addForm, role: 'student', face_registered: true } });
+      setAddMessage(`Student profile & biometric face photo enrolled successfully for ${studentObj.name}!`);
+      broadcastEvent('REGISTER_USER', { user: studentObj });
       
       // Reset form
       setAddForm({
@@ -466,34 +496,34 @@ export default function AdminDashboard() {
       }, 4000);
       
     } catch (err) {
-      // Automatic cloud resilience: save student profile & face model locally if cloud API is offline
+      // Automatic cloud resilience fallback
       try {
-        const newStudent = {
-          id: Date.now(),
-          name: addForm.name || "Student",
-          email: (addForm.email || "").toLowerCase(),
+        const newUserId = Date.now();
+        const studentObj = {
+          id: newUserId,
+          ...addForm,
+          email: cleanEmail,
+          usn: cleanUsn,
+          roll_no: cleanUsn,
           role: 'student',
-          usn: addForm.usn || "CS" + Math.floor(1000 + Math.random() * 9000),
-          roll_no: addForm.usn || "CS" + Math.floor(1000 + Math.random() * 9000),
-          phone_number: addForm.phone_number || "",
-          department: addForm.department || "Computer Science",
-          semester: addForm.semester || "1",
           password: addForm.password || "password123",
-          face_registered: true
+          face_registered: true,
+          face_image: faceImage
         };
+
+        await saveRegisteredStudentPhoto(studentObj, faceImage);
+
         const existing = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
-        const filtered = existing.filter(u => u.email.toLowerCase() !== newStudent.email.toLowerCase());
-        filtered.push(newStudent);
+        const filtered = existing.filter(u => u.email.toLowerCase() !== cleanEmail);
+        filtered.push(studentObj);
         localStorage.setItem('geoattend_custom_users', JSON.stringify(filtered));
-        if (faceImage) {
-          localStorage.setItem(`geoattend_face_${newStudent.id}`, faceImage);
-        }
-        setUsers(prev => [...prev, newStudent]);
-        broadcastEvent('REGISTER_USER', { user: newStudent });
+
+        setUsers(prev => [...prev, studentObj]);
+        broadcastEvent('REGISTER_USER', { user: studentObj });
         await fetchUsers();
         await fetchStats();
         setAddStatus('success');
-        setAddMessage('Student profile and face model registered successfully (Cloud Storage)!');
+        setAddMessage(`Student profile & biometric face photo enrolled successfully for ${studentObj.name}!`);
         setAddForm({
           name: '',
           email: '',

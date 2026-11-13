@@ -269,19 +269,30 @@ function handleMockRequest(url, method, rawData) {
 
   // 2. Auth Login
   if (url.includes('/auth/login')) {
-    const email = (postData.email || '').toLowerCase();
+    const email = (postData.email || '').toLowerCase().trim();
     
     // Check if it matches any registered custom student!
     try {
       const customUsers = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
-      const found = customUsers.find(u => u.email.toLowerCase() === email);
+      const found = customUsers.find(u => u.email && u.email.toLowerCase().trim() === email);
       if (found) {
+        const photo = localStorage.getItem(`geoattend_face_${found.id}`) || localStorage.getItem(`geoattend_face_${email}`) || found.face_image;
         return {
           access_token: "mock-token-student-" + Date.now(),
-          user: found
+          user: { ...found, face_image: photo, face_registered: !!photo }
         };
       }
     } catch (e) {}
+
+    // Check pre-enrolled default roster
+    const defUser = DEFAULT_USERS.find(u => u.email && u.email.toLowerCase().trim() === email);
+    if (defUser) {
+      const photo = localStorage.getItem(`geoattend_face_${defUser.id}`) || localStorage.getItem(`geoattend_face_${email}`) || defUser.face_image;
+      return {
+        access_token: `mock-token-${defUser.role}-${Date.now()}`,
+        user: { ...defUser, face_image: photo, face_registered: !!photo }
+      };
+    }
 
     if (email.includes('admin')) {
       return {
@@ -305,22 +316,8 @@ function handleMockRequest(url, method, rawData) {
           department: "Computer Science"
         }
       };
-    } else {
-      if (email.includes('rahul') || email === 'student@college.edu') {
-        return {
-          access_token: "mock-token-student-" + Date.now(),
-          user: {
-            id: 3,
-            name: "Rahul Sharma",
-            email: "student@college.edu",
-            role: "student",
-            usn: "CS2024001",
-            roll_no: "CS2024001",
-            department: "Computer Science",
-            semester: 5
-          }
-        };
-      }
+    } else if (email.includes('roja') || email === 'thimmareddym4@gmail.com') {
+      const rojaPhoto = localStorage.getItem('geoattend_face_13') || localStorage.getItem('geoattend_face_thimmareddym4@gmail.com');
       return {
         access_token: "mock-token-student-" + Date.now(),
         user: {
@@ -331,7 +328,29 @@ function handleMockRequest(url, method, rawData) {
           usn: "3BR23CA060",
           roll_no: "3BR23CA060",
           department: "Computer Science (AI & ML)",
-          semester: 7
+          semester: 7,
+          face_image: rojaPhoto,
+          face_registered: !!rojaPhoto
+        }
+      };
+    } else {
+      // General Friend/Student Account (NEVER default to Roja!)
+      const cleanName = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const friendId = Math.abs(email.split('').reduce((a,c) => (a<<5)-a + c.charCodeAt(0), 0)) || Date.now();
+      const photo = localStorage.getItem(`geoattend_face_${friendId}`) || localStorage.getItem(`geoattend_face_${email}`);
+      return {
+        access_token: "mock-token-student-" + Date.now(),
+        user: {
+          id: friendId,
+          name: cleanName || "Student",
+          email: email,
+          role: "student",
+          usn: "3BR23" + (email.substring(0, 3).toUpperCase()) + "01",
+          roll_no: "3BR23" + (email.substring(0, 3).toUpperCase()) + "01",
+          department: "Computer Science",
+          semester: 5,
+          face_image: photo,
+          face_registered: !!photo
         }
       };
     }

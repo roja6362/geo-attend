@@ -1056,12 +1056,12 @@ export default function StudentDashboard() {
           subject_name: currentActiveSession?.subject_name || 'Artificial Intelligence & ML',
           spoof_detected: false,
           proxy_detected: true,
-          rejection_reason: `Proxy attendance blocked: Live face belongs to Roja M (3BR23CA060), but this session is for ${studentName}. Buddy punching rejected.`
+          rejection_reason: `Proxy attendance blocked: Live face does NOT match the registered student photo for ${studentName}. Buddy punching rejected.`
         };
 
         setStatus('error');
         setLivenessStage('idle');
-        const msg = `Biometric Mismatch: Live face does NOT match the registered student photo for ${studentName}! (Live face identified as Roja M, USN: 3BR23CA060). Proxy attendance blocked.`;
+        const msg = `Biometric Mismatch: Live face does NOT match the registered student photo for ${studentName}! Proxy attendance blocked.`;
         setMessage(msg);
         speakText(`Proxy attendance blocked. Live face does not match ${studentName}.`);
         setDetails(rejectRecord);
@@ -1756,7 +1756,7 @@ export default function StudentDashboard() {
                       
                       {details?.proxy_detected && (
                         <div className="p-2.5 bg-red-100/60 dark:bg-red-900/40 rounded-lg text-[11px] text-red-900 dark:text-red-200 font-medium border border-red-300 dark:border-red-800">
-                          🛡️ Anti-Proxy Protection: Buddy punching is strictly prohibited under BITM college policy. The live face belongs to Roja M, but the active session is for {user.name}.
+                          🛡️ Anti-Proxy Protection: Buddy punching is strictly prohibited under BITM college policy. The live face does NOT match the enrolled biometric reference for {user.name || 'this student'}.
                         </div>
                       )}
 
@@ -1766,13 +1766,24 @@ export default function StudentDashboard() {
                         </div>
                       )}
 
-                      <button
-                        onClick={startLivenessAndPunch}
-                        className="w-full py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        <span>Try Again</span>
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={startLivenessAndPunch}
+                          className="flex-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          <span>Try Again</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowFaceModal(true)}
+                          className="flex-1 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Camera className="h-3.5 w-3.5" />
+                          <span>Update Face Photo</span>
+                        </button>
+                      </div>
                     </div>
                   )}
 
