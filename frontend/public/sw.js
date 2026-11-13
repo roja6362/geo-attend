@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v27-stricteye';
+const CACHE_NAME = 'geo-attend-v28-facematch';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

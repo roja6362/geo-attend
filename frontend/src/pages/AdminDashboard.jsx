@@ -431,6 +431,8 @@ export default function AdminDashboard() {
       });
       
       const newUserId = res.data?.user_id || res.data?.user?.id || Date.now();
+      const cleanEmail = (addForm.email || '').toLowerCase().trim();
+      const cleanUsn = (addForm.usn || '').toLowerCase().trim();
 
       // 2. Register Face Model
       setAddMessage('Registering student face biometrics...');
@@ -441,9 +443,37 @@ export default function AdminDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      // Always save face photo in localStorage for fast biometric comparison and offline resilience
+      if (faceImage) {
+        localStorage.setItem(`geoattend_face_${newUserId}`, faceImage);
+        if (cleanEmail) localStorage.setItem(`geoattend_face_${cleanEmail}`, faceImage);
+        if (cleanUsn) localStorage.setItem(`geoattend_face_${cleanUsn}`, faceImage);
+      }
+
+      // Keep custom user registry updated with face photo reference
+      try {
+        const existing = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
+        const updated = existing.filter(u => u.email.toLowerCase() !== cleanEmail);
+        updated.push({
+          id: newUserId,
+          name: addForm.name || "Student",
+          email: cleanEmail,
+          role: 'student',
+          usn: addForm.usn || "CS" + Math.floor(1000 + Math.random() * 9000),
+          roll_no: addForm.usn || "CS" + Math.floor(1000 + Math.random() * 9000),
+          phone_number: addForm.phone_number || "",
+          department: addForm.department || "Computer Science",
+          semester: addForm.semester || "1",
+          password: addForm.password || "password123",
+          face_registered: true,
+          face_image: faceImage
+        });
+        localStorage.setItem('geoattend_custom_users', JSON.stringify(updated));
+      } catch (e) {}
+
       setAddStatus('success');
       setAddMessage('Student profile and face model registered successfully!');
-      broadcastEvent('REGISTER_USER', { user: { id: newUserId, ...addForm, role: 'student', face_registered: true } });
+      broadcastEvent('REGISTER_USER', { user: { id: newUserId, ...addForm, role: 'student', face_registered: true, face_image: faceImage } });
       
       // Reset form
       setAddForm({
@@ -479,7 +509,8 @@ export default function AdminDashboard() {
           department: addForm.department || "Computer Science",
           semester: addForm.semester || "1",
           password: addForm.password || "password123",
-          face_registered: true
+          face_registered: true,
+          face_image: faceImage
         };
         const existing = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
         const filtered = existing.filter(u => u.email.toLowerCase() !== newStudent.email.toLowerCase());
@@ -487,6 +518,10 @@ export default function AdminDashboard() {
         localStorage.setItem('geoattend_custom_users', JSON.stringify(filtered));
         if (faceImage) {
           localStorage.setItem(`geoattend_face_${newStudent.id}`, faceImage);
+          localStorage.setItem(`geoattend_face_${newStudent.email.toLowerCase()}`, faceImage);
+          if (newStudent.usn) {
+            localStorage.setItem(`geoattend_face_${newStudent.usn.toLowerCase()}`, faceImage);
+          }
         }
         setUsers(prev => [...prev, newStudent]);
         broadcastEvent('REGISTER_USER', { user: newStudent });
