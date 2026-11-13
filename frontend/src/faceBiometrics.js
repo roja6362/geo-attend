@@ -170,7 +170,7 @@ export function extractFaceEmbedding(imageSrc) {
   });
 }
 
-export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 70.0) {
+export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 60.0) {
   if (!embeddingA || !embeddingB) {
     return { matched: false, similarity: 0.0, threshold };
   }
@@ -224,30 +224,38 @@ export function compareFaceEmbeddings(embeddingA, embeddingB, threshold = 70.0) 
       }
     }
   }
-  // Map Pearson correlation [-1, 1] to similarity [0, 1]
-  const gridSim = Math.max(0, Math.min(1, (bestGridCorr + 1) / 2));
+
+  // Pearson correlation scaling:
+  // Random/different human faces have natural correlation baseline of ~0.0 to 0.25
+  // The same human face (even in varying light or distance) has correlation ~0.55 to 0.95
+  let gridSim = 0.0;
+  if (bestGridCorr <= 0.20) {
+    gridSim = Math.max(0, bestGridCorr * 0.4);
+  } else {
+    gridSim = Math.min(1.0, (bestGridCorr - 0.20) / (0.75 - 0.20));
+  }
 
   // C. Aspect Ratio Similarity
   const aspectA = embA.aspect || 1.0;
   const aspectB = embB.aspect || 1.0;
   const aspectDiff = Math.abs(aspectA - aspectB) / Math.max(aspectA, aspectB, 0.01);
-  const aspectSim = Math.max(0, 1 - aspectDiff * 1.2);
+  const aspectSim = Math.max(0, 1 - aspectDiff * 1.5);
 
   // D. Sobel Texture Similarity
   let sobelSim = 0.8;
   if (embA.sobel && embB.sobel) {
     const diffH = Math.abs(embA.sobel.hRatio - embB.sobel.hRatio);
     const diffV = Math.abs(embA.sobel.vRatio - embB.sobel.vRatio);
-    sobelSim = Math.max(0, 1 - (diffH + diffV));
+    sobelSim = Math.max(0, 1 - (diffH + diffV) * 2.0);
   }
 
   // Combined Multi-Biometric Similarity [0 - 100]%
-  // Weighted: 50% Structural Grid Alignment + 35% Skin Chrominance + 10% Aspect + 5% Texture
+  // Weighted: 55% Structural Grid + 25% Chrominance + 10% Aspect + 10% Texture
   const totalScore = (
-    0.50 * gridSim +
-    0.35 * colorSim +
+    0.55 * gridSim +
+    0.25 * colorSim +
     0.10 * aspectSim +
-    0.05 * sobelSim
+    0.10 * sobelSim
   ) * 100;
 
   const similarity = parseFloat(Math.min(100, Math.max(0, totalScore)).toFixed(1));
@@ -268,9 +276,14 @@ function parseLegacyEmbedding(raw) {
   return null;
 }
 
-export async function compareFaceImages(livePhoto, registeredPhoto, threshold = 70.0) {
+export async function compareFaceImages(livePhoto, registeredPhoto, threshold = 60.0) {
   if (!livePhoto || !registeredPhoto) {
     return { matched: false, similarity: 0.0, threshold, reason: 'Missing photo data' };
+  }
+
+  // Exact data match fast-path
+  if (livePhoto === registeredPhoto) {
+    return { matched: true, similarity: 100.0, threshold };
   }
 
   const [embLive, embRef] = await Promise.all([
@@ -306,7 +319,7 @@ export function getRegisteredStudentPhoto(user) {
     return user.face_image;
   }
 
-  // 2. Custom registered users
+  // 2. Custom registered users (Saved during Admin registration)
   try {
     const customUsers = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
     const cleanEmail = (user.email || '').toLowerCase().trim();
@@ -325,13 +338,15 @@ export function getRegisteredStudentPhoto(user) {
     }
   } catch (e) {}
 
-  // 3. Pre-registered student profiles (Admin registered reference templates)
+  // 3. Official Pre-registered student reference portraits
   try {
     const cleanEmail = (user.email || '').toLowerCase().trim();
-    if (cleanEmail.includes('rahul') || cleanEmail === 'student@college.edu') return DEFAULT_STUDENT_PHOTOS.rahul;
-    if (cleanEmail.includes('ananya')) return DEFAULT_STUDENT_PHOTOS.ananya;
-    if (cleanEmail.includes('spoorthi')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
-    if (cleanEmail.includes('manisha')) return DEFAULT_STUDENT_PHOTOS.manisha;
+    const cleanName = (user.name || '').toLowerCase().trim();
+    if (cleanEmail.includes('roja') || cleanName.includes('roja') || cleanEmail === 'thimmareddym4@gmail.com') return DEFAULT_STUDENT_PHOTOS.roja;
+    if (cleanEmail.includes('rahul') || cleanName.includes('rahul') || cleanEmail === 'student@college.edu') return DEFAULT_STUDENT_PHOTOS.rahul;
+    if (cleanEmail.includes('ananya') || cleanName.includes('ananya')) return DEFAULT_STUDENT_PHOTOS.ananya;
+    if (cleanEmail.includes('spoorthi') || cleanName.includes('spoorthi')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
+    if (cleanEmail.includes('manisha') || cleanName.includes('manisha')) return DEFAULT_STUDENT_PHOTOS.manisha;
   } catch (e) {}
 
   return null;

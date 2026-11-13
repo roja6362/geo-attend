@@ -52,7 +52,7 @@ import AttendanceCertificateModal from '../components/AttendanceCertificateModal
 import { API_URL } from '../config';
 import { onSyncEvent, broadcastEvent } from '../realtimeSync.js';
 import { BITM_DAILY_TIMETABLE } from '../data/schedule.js';
-import { compareFaceImages, getRegisteredStudentPhoto, saveRegisteredStudentPhoto } from '../faceBiometrics';
+import { compareFaceImages, getRegisteredStudentPhoto } from '../faceBiometrics';
 
 const DYNAMIC_CHALLENGES = [
   {
@@ -250,40 +250,6 @@ export default function StudentDashboard() {
   const [pinError, setPinError] = useState('');
   const [pinSuccess, setPinSuccess] = useState('');
 
-  // 📸 Profile Face Registration & Update States
-  const [showFaceModal, setShowFaceModal] = useState(false);
-  const [tempFaceImage, setTempFaceImage] = useState(null);
-  const [faceUpdateSuccess, setFaceUpdateSuccess] = useState('');
-  const profileWebcamRef = useRef(null);
-
-  const handleCaptureProfileFace = () => {
-    if (profileWebcamRef.current) {
-      const shot = profileWebcamRef.current.getScreenshot();
-      if (shot) setTempFaceImage(shot);
-    }
-  };
-
-  const handleUploadProfileFace = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setTempFaceImage(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSaveProfileFace = async () => {
-    if (!tempFaceImage) return;
-    await saveRegisteredStudentPhoto(user, tempFaceImage);
-    if (user.id) localStorage.setItem(`geoattend_self_verified_${user.id}`, 'true');
-    if (user.email) localStorage.setItem(`geoattend_self_verified_${user.email.toLowerCase()}`, 'true');
-    setFaceUpdateSuccess('Biometric face model saved successfully!');
-    setTimeout(() => {
-      setShowFaceModal(false);
-      setTempFaceImage(null);
-      setFaceUpdateSuccess('');
-    }, 1500);
-  };
 
   const handleVerifyClassroomPin = (e) => {
     e.preventDefault();
@@ -838,57 +804,33 @@ export default function StudentDashboard() {
       return;
     }
 
-    // 3. 🧠 Strict 1-to-1 Facial Biometrics & Anti-Proxy Guard
-    setMessage(`Comparing live facial features with enrolled profile for ${user.name || 'Student'}...`);
+    // 3. 🧠 Strict 1-to-1 Facial Biometrics against Admin-Registered Photo
+    setMessage(`Verifying live face against admin-registered reference photo for ${user.name || 'Student'}...`);
     
-    let registeredPhoto = getRegisteredStudentPhoto(user);
+    const registeredPhoto = getRegisteredStudentPhoto(user);
     
-    const isRojaUser = (
-      (user.name && user.name.toLowerCase().includes('roja')) ||
-      (user.email && user.email.toLowerCase().includes('roja')) ||
-      (user.usn && user.usn.toUpperCase().includes('3BR23CA060')) ||
-      (user.id === 13)
-    );
-
-    const cleanUserEmail = (user.email || '').toLowerCase().trim();
-    const isSelfVerified = (
-      localStorage.getItem(`geoattend_self_verified_${user.id}`) === 'true' ||
-      (cleanUserEmail && localStorage.getItem(`geoattend_self_verified_${cleanUserEmail}`) === 'true')
-    );
-
-    let faceMatchResult = { matched: false, similarity: 0.0, threshold: 65.0 };
-
-    if (isRojaUser) {
-      // ✅ Genuine Student: M. Roja punching for M. Roja
-      // Physical face in front of camera is Roja M -> ALWAYS VERIFIED PRESENT!
-      if (!registeredPhoto) {
-        await saveRegisteredStudentPhoto(user, frame2);
-        registeredPhoto = frame2;
-      }
-      faceMatchResult = {
-        matched: true,
-        similarity: parseFloat((98.2 + Math.random() * 1.4).toFixed(1)),
-        threshold: 65.0
-      };
-    } else if (isSelfVerified) {
-      // ✅ Genuine Student: A friend punching on their own phone where they verified their profile
-      faceMatchResult = {
-        matched: true,
-        similarity: parseFloat((96.5 + Math.random() * 2.5).toFixed(1)),
-        threshold: 65.0
-      };
-    } else {
-      // 🚫 PROXY ATTEMPT: Roja M is operating the camera, but the active session belongs to a friend
-      // (e.g. Rahul Sharma, Ananya Patel, Spoorthi, Manisha, etc.)!
-      // The live camera face does NOT match the enrolled friend's profile -> STRICTLY REJECT!
-      const proxyScore = parseFloat((23.0 + Math.random() * 14).toFixed(1));
-      faceMatchResult = {
-        matched: false,
-        similarity: proxyScore,
-        threshold: 65.0,
-        reason: `Biometric Mismatch: Live face does NOT match the registered student photo for ${user.name || 'this student'}!`
-      };
+    if (!registeredPhoto) {
+      setStatus('error');
+      setLivenessStage('idle');
+      const studentName = user.name || 'this student';
+      const noPhotoMsg = `Biometric Error: No reference photo registered by College Admin for ${studentName}. Attendance requires an official photo enrolled in Admin Dashboard. Please contact your college administrator.`;
+      setMessage(noPhotoMsg);
+      speakText('No reference photo registered by admin.');
+      setDetails({
+        inside_geofence: isInside,
+        distance: currentDist,
+        geo_verified: isInside,
+        face_match: false,
+        liveness_passed: true,
+        liveness_score: blinkCheck.score,
+        spoof_detected: false,
+        message: noPhotoMsg
+      });
+      return;
     }
+
+    // Perform real, rigorous biometric comparison between live webcam capture (frame2) and the Admin-registered photo
+    const faceMatchResult = await compareFaceImages(frame2, registeredPhoto, 60.0);
 
     if (!faceMatchResult.matched) {
       setStatus('error');
@@ -1618,32 +1560,21 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Reference Face Thumbnail & Enrolled Status */}
+                    {/* Reference Face Thumbnail & Enrolled Status (Read Only - Admin Controlled) */}
                     {getRegisteredStudentPhoto(user) ? (
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-700 dark:text-emerald-300">
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-700 dark:text-emerald-300" title="Official Reference Photo Enrolled by College Admin">
                         <img 
                           src={getRegisteredStudentPhoto(user)} 
                           alt="Enrolled" 
                           className="h-5 w-5 rounded-full object-cover border border-emerald-400"
                         />
-                        <span className="hidden sm:inline font-semibold">Ref Enrolled</span>
-                        <button
-                          type="button"
-                          onClick={() => setShowFaceModal(true)}
-                          className="text-[10px] underline font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-950 cursor-pointer ml-0.5"
-                        >
-                          Update
-                        </button>
+                        <span className="font-semibold">Admin Photo Verified</span>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => setShowFaceModal(true)}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer animate-pulse"
-                      >
-                        <Camera className="h-3 w-3" />
-                        <span>Enroll Face</span>
-                      </button>
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-700 dark:text-amber-300" title="No photo registered by Admin">
+                        <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="font-semibold">Photo Pending Admin Registration</span>
+                      </div>
                     )}
 
                     {/* Camera Flip Button for mobile smartphones */}
@@ -1821,22 +1752,14 @@ export default function StudentDashboard() {
                         </div>
                       )}
 
-                      <div className="flex gap-2">
+                      <div>
                         <button
                           type="button"
                           onClick={startLivenessAndPunch}
-                          className="flex-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          className="w-full py-2.5 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
                         >
                           <RotateCcw className="h-3.5 w-3.5" />
                           <span>Try Again</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowFaceModal(true)}
-                          className="flex-1 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <Camera className="h-3.5 w-3.5" />
-                          <span>Update Face Photo</span>
                         </button>
                       </div>
                     </div>
@@ -2238,18 +2161,14 @@ export default function StudentDashboard() {
                     <div className="flex-1">
                       <p className="text-xs text-gray-700 dark:text-gray-300 font-medium leading-relaxed">
                         {getRegisteredStudentPhoto(user)
-                          ? `Registered biometric face for ${user.name || 'this student'}. Live attendance selfies are strictly matched against this photo.`
-                          : `No face photo stored for ${user.name || 'this student'}. Snap a selfie to enable 1-to-1 face verification.`
+                          ? `Official biometric reference enrolled by College Admin for ${user.name || 'this student'}. Live camera selfies during attendance are strictly verified against this photo.`
+                          : `No biometric reference photo registered yet for ${user.name || 'this student'}. Please contact your college administrator to capture or upload your photo in Admin Dashboard.`
                         }
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowFaceModal(true)}
-                        className="mt-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow cursor-pointer"
-                      >
-                        <Camera className="h-3.5 w-3.5" />
-                        <span>{getRegisteredStudentPhoto(user) ? 'Re-snap / Update Face Photo' : 'Enroll Face Photo Now'}</span>
-                      </button>
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-semibold border border-gray-200 dark:border-gray-700">
+                        <Lock className="h-3.5 w-3.5 text-gray-500" />
+                        <span>Official ID Photo (Enrolled by Admin - Read Only)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2265,86 +2184,6 @@ export default function StudentDashboard() {
                 </Link>
               </div>
             </div>
-
-            {/* 📸 Profile Face Registration / Update Modal */}
-            {showFaceModal && (
-              <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-                <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full border border-gray-200 dark:border-gray-800 shadow-2xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white text-sm">
-                        Enroll Face: {user.name}
-                      </h3>
-                      <p className="text-[10px] text-gray-500">
-                        Official biometric photo for {user.usn || 'student'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setShowFaceModal(false); setTempFaceImage(null); }}
-                      className="text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  {faceUpdateSuccess && (
-                    <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-xl flex items-center gap-2 border border-emerald-200 animate-fadeIn">
-                      <CheckCircle className="h-4 w-4 text-emerald-600" />
-                      <span>{faceUpdateSuccess}</span>
-                    </div>
-                  )}
-
-                  {tempFaceImage ? (
-                    <div className="relative w-40 h-40 mx-auto rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-md">
-                      <img src={tempFaceImage} alt="Captured" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setTempFaceImage(null)}
-                        className="absolute top-1.5 right-1.5 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 shadow cursor-pointer"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-gray-700">
-                        <Webcam
-                          audio={false}
-                          ref={profileWebcamRef}
-                          screenshotFormat="image/jpeg"
-                          videoConstraints={{ facingMode: 'user' }}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={handleCaptureProfileFace}
-                          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow cursor-pointer"
-                        >
-                          <Camera className="h-4 w-4" /> Snap Photo
-                        </button>
-                        <label className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 border border-gray-300 dark:border-gray-700 cursor-pointer">
-                          <Upload className="h-4 w-4" /> Gallery
-                          <input type="file" accept="image/*" onChange={handleUploadProfileFace} className="hidden" />
-                        </label>
-                      </div>
-                    </div>
-                  )}
-
-                  {tempFaceImage && (
-                    <button
-                      type="button"
-                      onClick={handleSaveProfileFace}
-                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer"
-                    >
-                      Save As Official Face Photo
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         )}
 

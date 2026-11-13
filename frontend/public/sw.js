@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v36-admin-enrolled-photos';
+const CACHE_NAME = 'geo-attend-v38-admin-only-biometrics';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
