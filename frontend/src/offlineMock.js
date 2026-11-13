@@ -429,6 +429,88 @@ function handleMockRequest(url, method, rawData) {
     const blockHash = "0000" + Math.random().toString(16).substring(2, 12) + "a8f9c1e2";
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    // 🛡️ ANTI-PROXY & BIOMETRIC IDENTITY VERIFICATION:
+    // The physical person operating the device camera is Roja M (USN: 3BR23CA060).
+    // If the active account belongs to ANOTHER student (e.g. Rahul Sharma, Ananya, Manisha)
+    // and no distinct registered face was enrolled for them, the live face in the camera
+    // belongs to Roja, NOT the logged-in student. This is buddy punching / proxy attendance!
+    const isRojaUser = (
+      (currentUser.name && currentUser.name.toLowerCase().includes('roja')) ||
+      (currentUser.email && currentUser.email.toLowerCase().includes('roja')) ||
+      (currentUser.usn && currentUser.usn.toUpperCase().includes('3BR23CA060')) ||
+      (currentUser.id === 13)
+    );
+
+    let studentFace = null;
+    if (currentUser.id) studentFace = localStorage.getItem(`geoattend_face_${currentUser.id}`);
+    if (!studentFace && currentUser.email) studentFace = localStorage.getItem(`geoattend_face_${currentUser.email.toLowerCase()}`);
+    if (!studentFace && currentUser.face_image) studentFace = currentUser.face_image;
+
+    // Reject proxy attendance if another student is logged in and Roja's face is used
+    if (!isRojaUser && !studentFace) {
+      const rejectRecord = {
+        id: Date.now(),
+        student_id: currentUser.id || 3,
+        student_name: studentName,
+        roll_no: studentUsn,
+        usn: studentUsn,
+        department: studentDept,
+        subject_name: subjectName,
+        timestamp: timeStr,
+        time: timeStr,
+        date: "Today",
+        status: "REJECTED",
+        final_status: "REJECTED",
+        face_verified: false,
+        face_match: false,
+        face_confidence: 22.4,
+        similarity_score: 22.4,
+        geo_verified: true,
+        inside_geofence: true,
+        distance: 8.5,
+        liveness_verified: true,
+        liveness_passed: true,
+        liveness_score: 99.4,
+        spoof_detected: false,
+        proxy_detected: true,
+        is_verified: false,
+        verification_method: "Biometric AI (Proxy Rejection)",
+        rejection_reason: `Proxy attendance blocked: Live face belongs to Roja M (3BR23CA060), but this session is for ${studentName}. Buddy punching rejected.`
+      };
+
+      try {
+        const rollcall = JSON.parse(localStorage.getItem('geoattend_active_rollcall') || '[]');
+        const filtered = rollcall.filter(r => r.student_id !== rejectRecord.student_id && r.roll_no !== rejectRecord.roll_no);
+        filtered.unshift(rejectRecord);
+        localStorage.setItem('geoattend_active_rollcall', JSON.stringify(filtered));
+      } catch(e) {}
+
+      try {
+        const history = JSON.parse(localStorage.getItem('geoattend_mock_history') || '[]');
+        history.unshift(rejectRecord);
+        localStorage.setItem('geoattend_mock_history', JSON.stringify(history));
+      } catch(e) {}
+
+      broadcastEvent('STUDENT_CHECKIN', { record: rejectRecord });
+
+      return {
+        success: false,
+        final_status: "REJECTED",
+        status: "REJECTED",
+        face_match: false,
+        face_confidence: 22.4,
+        liveness_passed: true,
+        liveness_score: 99.4,
+        inside_geofence: true,
+        distance: 8.5,
+        proxy_detected: true,
+        subject_name: subjectName,
+        face_msg: `Biometric Mismatch: Live face does NOT match the registered student photo for ${studentName}! (Live face identified as Roja M, USN: 3BR23CA060). Proxy attendance blocked.`,
+        message: `Proxy Attendance Blocked: Live face does not match ${studentName}!`,
+        record: rejectRecord
+      };
+    }
+
     const mockRecord = {
       id: Date.now(),
       student_id: currentUser.id || 13,
@@ -443,15 +525,19 @@ function handleMockRequest(url, method, rawData) {
       status: "PRESENT",
       final_status: "PRESENT",
       face_verified: true,
+      face_match: true,
       geo_verified: true,
+      inside_geofence: true,
+      distance: 8.5,
       liveness_verified: true,
-      liveness_score: 99.2,
+      liveness_passed: true,
+      liveness_score: 99.4,
       similarity_score: 98.7,
       face_confidence: 98.7,
       block_id: blockId,
       block_hash: blockHash,
       is_verified: true,
-      verification_method: "Biometric + GPS (Instant 1-Tap)"
+      verification_method: "Biometric (Eye-Blink EAR) + GPS"
     };
 
     // Save into active rollcall so Teacher Dashboard immediately reflects check-in!

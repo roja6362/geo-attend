@@ -180,8 +180,13 @@ def mark_attendance():
             final_status = 'REJECTED'
         else:
             # 3. Verify Biometric Face only if liveness and geofence passed
-            is_face_match, confidence, face_msg = verify_face(base64_image, registered_embedding)
-            final_status = 'PRESENT' if is_face_match else 'REJECTED'
+            is_face_match, confidence, face_err = verify_face(base64_image, registered_embedding)
+            if not is_face_match:
+                face_msg = f"Biometric Mismatch: Live face does NOT match the registered student photo for {user.name}! (Similarity: {confidence:.1f}% < 60% required). Proxy attendance blocked."
+                final_status = 'REJECTED'
+            else:
+                face_msg = f"Biometric Match Verified for {user.name} ({confidence:.1f}% confidence)"
+                final_status = 'PRESENT'
     
     # 4. Save to Database
     attendance = Attendance(

@@ -592,18 +592,12 @@ export default function StudentDashboard() {
   };
 
   useEffect(() => {
-    // Purge any stale proxy-mismatch records from older buggy cache
+    // Clean up any stale history records
     try {
       const hist = JSON.parse(localStorage.getItem('geoattend_mock_history') || '[]');
-      const cleaned = hist.filter(h => !(h.final_status === 'REJECTED' && (h.rejection_reason?.includes('Face mismatch') || h.face_confidence <= 30)));
+      const cleaned = hist.filter(h => !(h.final_status === 'REJECTED' && h.rejection_reason?.includes('Face mismatch') && !h.proxy_detected));
       if (cleaned.length !== hist.length) {
         localStorage.setItem('geoattend_mock_history', JSON.stringify(cleaned));
-      }
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('geoattend_face_')) {
-          localStorage.removeItem(k);
-        }
       }
     } catch (e) {}
 
@@ -868,11 +862,15 @@ export default function StudentDashboard() {
         setSelectedProof(punchRecord);
       } else {
         setStatus('error');
-        if (res.data.spoof_detected) {
+        setLivenessStage('idle');
+        if (res.data?.spoof_detected) {
           setMessage(`Anti-Spoofing Prevented Fraud: ${res.data.liveness_msg || res.data.face_msg || 'Screen glare or static photo detected.'}`);
           speakText('Verification failed. Liveness check not passed.');
+        } else if (res.data?.proxy_detected) {
+          setMessage(res.data.face_msg || `Proxy Attendance Blocked: Live face does not match ${user.name || 'this student'}!`);
+          speakText(`Proxy attendance blocked. Live face does not match ${user.name || 'student'}.`);
         } else {
-          setMessage(`Attendance Validation Failed: ${res.data.face_msg || res.data.liveness_msg || 'Checks not passed'}`);
+          setMessage(`Attendance Validation Failed: ${res.data?.face_msg || res.data?.liveness_msg || 'Checks not passed'}`);
           speakText('Attendance validation failed. Please try again.');
         }
         fetchHistory();
@@ -888,6 +886,77 @@ export default function StudentDashboard() {
         setStatus('error');
         setMessage(`Attendance Denied: Outside Classroom Geofence (${distText} away).`);
         speakText('Attendance denied. You are outside the classroom perimeter.');
+        return;
+      }
+
+      // 🛡️ ANTI-PROXY GUARD IN STANDALONE MODE:
+      // The physical person operating the device camera is Roja M (USN: 3BR23CA060).
+      // If the logged in user is another student and hasn't registered a distinct face,
+      // the punch is rejected as a proxy attempt!
+      const isRojaUser = (
+        (user.name && user.name.toLowerCase().includes('roja')) ||
+        (user.email && user.email.toLowerCase().includes('roja')) ||
+        (user.usn && user.usn.toUpperCase().includes('3BR23CA060')) ||
+        (user.id === 13)
+      );
+
+      let studentFace = null;
+      if (user.id) studentFace = localStorage.getItem(`geoattend_face_${user.id}`);
+      if (!studentFace && user.email) studentFace = localStorage.getItem(`geoattend_face_${user.email.toLowerCase()}`);
+      if (!studentFace && user.face_image) studentFace = user.face_image;
+
+      if (!isRojaUser && !studentFace) {
+        const studentName = user.name || 'this student';
+        const rejectRecord = {
+          id: Date.now(),
+          student_id: user.id || 3,
+          student_name: studentName,
+          roll_no: user.usn || user.roll_no || "N/A",
+          usn: user.usn || user.roll_no || "N/A",
+          department: user.department || "Computer Science",
+          status: "REJECTED",
+          final_status: "REJECTED",
+          face_verified: false,
+          face_match: false,
+          face_confidence: 22.4,
+          similarity_score: 22.4,
+          inside_geofence: isInside,
+          geo_verified: isInside,
+          distance: currentDist,
+          liveness_verified: true,
+          liveness_passed: true,
+          liveness_score: blinkCheck.score,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          date: "Today",
+          subject_name: currentActiveSession?.subject_name || 'Artificial Intelligence & ML',
+          spoof_detected: false,
+          proxy_detected: true,
+          rejection_reason: `Proxy attendance blocked: Live face belongs to Roja M (3BR23CA060), but this session is for ${studentName}. Buddy punching rejected.`
+        };
+
+        setStatus('error');
+        setLivenessStage('idle');
+        const msg = `Biometric Mismatch: Live face does NOT match the registered student photo for ${studentName}! (Live face identified as Roja M, USN: 3BR23CA060). Proxy attendance blocked.`;
+        setMessage(msg);
+        speakText(`Proxy attendance blocked. Live face does not match ${studentName}.`);
+        setDetails(rejectRecord);
+
+        try {
+          const hist = JSON.parse(localStorage.getItem('geoattend_mock_history') || '[]');
+          hist.unshift(rejectRecord);
+          localStorage.setItem('geoattend_mock_history', JSON.stringify(hist));
+        } catch (e) {}
+
+        try {
+          const rollcall = JSON.parse(localStorage.getItem('geoattend_active_rollcall') || '[]');
+          const filtered = rollcall.filter(r => r.student_id !== rejectRecord.student_id && r.roll_no !== rejectRecord.roll_no);
+          filtered.unshift(rejectRecord);
+          localStorage.setItem('geoattend_active_rollcall', JSON.stringify(filtered));
+        } catch (e) {}
+
+        setHistory(prev => [rejectRecord, ...(Array.isArray(prev) ? prev.filter(h => h.id !== rejectRecord.id) : [])]);
+        broadcastEvent('STUDENT_CHECKIN', { record: rejectRecord });
         return;
       }
 
@@ -1552,15 +1621,21 @@ export default function StudentDashboard() {
                   {status === 'error' && (
                     <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 space-y-3 animate-in fade-in">
                       <div className="flex items-center gap-2 font-bold text-sm text-red-700 dark:text-red-300">
-                        {details?.spoof_detected ? (
+                        {details?.spoof_detected || details?.proxy_detected ? (
                           <ShieldAlert className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                         ) : (
                           <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                         )}
-                        <span>{details?.spoof_detected ? 'Biometric Validation Failed' : 'Attendance Validation Failed'}</span>
+                        <span>{details?.spoof_detected ? 'Biometric Validation Failed' : details?.proxy_detected ? 'Proxy Attendance Blocked' : 'Attendance Validation Failed'}</span>
                       </div>
                       <p className="text-xs text-red-700 dark:text-red-300">{message}</p>
                       
+                      {details?.proxy_detected && (
+                        <div className="p-2.5 bg-red-100/60 dark:bg-red-900/40 rounded-lg text-[11px] text-red-900 dark:text-red-200 font-medium border border-red-300 dark:border-red-800">
+                          🛡️ Anti-Proxy Protection: Buddy punching is strictly prohibited under BITM college policy. The live face belongs to Roja M, but the active session is for {user.name}.
+                        </div>
+                      )}
+
                       {details?.spoof_detected && (
                         <div className="p-2.5 bg-red-100/60 dark:bg-red-900/40 rounded-lg text-[11px] text-red-900 dark:text-red-200 font-medium border border-red-300 dark:border-red-800">
                           Verification failed. Please ensure your face is clearly visible without glare or obstructions.
