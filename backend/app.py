@@ -1,3 +1,6 @@
+import os
+os.environ["DEEPFACE_HOME"] = os.path.abspath(os.path.dirname(__file__))
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager

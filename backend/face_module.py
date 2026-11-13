@@ -1,8 +1,10 @@
+import os
+os.environ["DEEPFACE_HOME"] = os.path.abspath(os.path.dirname(__file__))
+
 import cv2
 import numpy as np
 import base64
 from deepface import DeepFace
-import os
 
 # Ensure face recognition weights exist in cloud environments
 try:

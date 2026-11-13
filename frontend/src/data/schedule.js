@@ -49,3 +49,4 @@ export const BITM_DAILY_TIMETABLE = [
     type: "Laboratory"
   }
 ];
+
