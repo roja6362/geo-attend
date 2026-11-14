@@ -69,6 +69,26 @@ const DYNAMIC_CHALLENGES = [
 
 export default function StudentDashboard() {
   const webcamRef = useRef(null);
+
+  // Helper: Format any time string or object into 12-hour format with AM/PM
+  const format12HourTime = (t) => {
+    if (!t) return '--';
+    const str = String(t).trim();
+    if (/am|pm/i.test(str)) return str;
+    const parts = str.split(':');
+    if (parts.length >= 2) {
+      let h = parseInt(parts[0], 10);
+      const m = parts[1];
+      const s = parts[2] ? parts[2].split('.')[0] : null;
+      if (!isNaN(h)) {
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        const hStr = h < 10 ? `0${h}` : `${h}`;
+        return s ? `${hStr}:${m}:${s} ${ampm}` : `${hStr}:${m} ${ampm}`;
+      }
+    }
+    return str;
+  };
   const [activeTab, setActiveTab] = useState('mark'); // 'mark', 'analytics', 'profile', 'tracker'
   const [facingMode, setFacingMode] = useState('user'); // 'user' (front) or 'environment' (back)
   
@@ -447,19 +467,6 @@ export default function StudentDashboard() {
         setLocation(coords);
         setGpsError(null);
 
-        // 📡 Broadcast live phone satellite GPS to laptop admin in real-time
-        try {
-          const gpsPayload = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: Math.round(position.coords.accuracy || 4),
-            user_name: user?.name || 'Mobile Phone',
-            timestamp: new Date().toLocaleTimeString()
-          };
-          broadcastEvent('DEVICE_GPS_HEARTBEAT', gpsPayload);
-          localStorage.setItem('geoattend_last_mobile_gps', JSON.stringify(gpsPayload));
-        } catch (e) {}
-
         const targetLat = parseFloat(geofence?.latitude || 15.167692);
         const targetLon = parseFloat(geofence?.longitude || 76.850600);
         const targetRad = parseFloat(geofence?.radius || 100);
@@ -741,8 +748,8 @@ export default function StudentDashboard() {
         geo_verified: false,
         inside_geofence: false,
         distance: currentDist,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
         date: "Today",
         subject_name: currentActiveSession?.subject_name || 'Lecture',
         rejection_reason: `Outside geofence (${distText} away)`
@@ -872,8 +879,8 @@ export default function StudentDashboard() {
         liveness_verified: true,
         liveness_passed: true,
         liveness_score: blinkCheck.score,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
         date: "Today",
         subject_name: currentActiveSession?.subject_name || 'Artificial Intelligence & ML',
         spoof_detected: false,
@@ -940,8 +947,8 @@ export default function StudentDashboard() {
           distance: currentDist,
           liveness_verified: true,
           liveness_passed: true,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
           date: "Today",
           liveness_score: res.data?.liveness_score || 99.4,
           similarity_score: res.data?.face_confidence || 98.7,
@@ -1029,8 +1036,8 @@ export default function StudentDashboard() {
           liveness_verified: true,
           liveness_passed: true,
           liveness_score: blinkCheck.score,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
           date: "Today",
           subject_name: currentActiveSession?.subject_name || 'Artificial Intelligence & ML',
           spoof_detected: false,
@@ -1099,8 +1106,8 @@ export default function StudentDashboard() {
         distance: currentDist,
         liveness_verified: true,
         liveness_passed: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
         date: "Today",
         liveness_score: 99.4,
         similarity_score: 98.5,
@@ -1490,36 +1497,13 @@ export default function StudentDashboard() {
                     {gpsError ? (
                       <span className="text-amber-600 dark:text-amber-400 font-medium">{gpsError}</span>
                     ) : location && distanceFromCenter !== null ? (
-                      <div>
-                        <div>
-                          {isInsideGeofence ? (
-                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                              GPS Verified inside perimeter • {Math.round(distanceFromCenter)}m from center (Limit: {geofence?.radius || 100}m)
-                            </span>
-                          ) : (
-                            <span className="text-red-600 dark:text-red-400 font-medium">
-                              {distanceFromCenter >= 1000 ? `${(distanceFromCenter / 1000).toFixed(1)} km` : `${Math.round(distanceFromCenter)}m`} away from classroom (Allowed: {geofence?.radius || 100}m)
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="font-mono text-[10px] text-gray-500 dark:text-gray-400">
-                            📍 Phone GPS: {location.lat.toFixed(6)}, {location.lon.toFixed(6)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              try {
-                                navigator.clipboard.writeText(`${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}`);
-                                alert(`Copied GPS coordinates: ${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}`);
-                              } catch (e) {}
-                            }}
-                            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
-                          >
-                            Copy GPS
-                          </button>
-                        </div>
-                      </div>
+                      isInsideGeofence ? (
+                        <span>GPS Verified inside perimeter • {Math.round(distanceFromCenter)}m from center (Limit: {geofence?.radius || 100}m)</span>
+                      ) : (
+                        <span className="text-red-600 dark:text-red-400 font-medium">
+                          {distanceFromCenter >= 1000 ? `${(distanceFromCenter / 1000).toFixed(1)} km` : `${Math.round(distanceFromCenter)}m`} away from classroom (Allowed: {geofence?.radius || 100}m)
+                        </span>
+                      )
                     ) : (
                       'Acquiring high-accuracy GPS coordinates...'
                     )}
@@ -2048,7 +2032,7 @@ export default function StudentDashboard() {
                             </div>
                             <div className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5">
                               <Clock className="h-3 w-3 text-gray-400" />
-                              <span>{item.time?.slice(0, 8)}</span>
+                              <span>{format12HourTime(item.time || item.timestamp)}</span>
                             </div>
                           </td>
                           <td className="px-5 py-4 whitespace-nowrap">
@@ -2773,7 +2757,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="flex justify-between py-1 border-b border-gray-100 dark:border-gray-800">
                   <span className="text-gray-500">Date & Time:</span>
-                  <span className="font-semibold">{selectedProof.date} {selectedProof.time}</span>
+                  <span className="font-semibold">{selectedProof.date} {format12HourTime(selectedProof.time)}</span>
                 </div>
 
                 {/* Biometric Facial Similarity Meter */}

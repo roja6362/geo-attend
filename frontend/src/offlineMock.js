@@ -524,7 +524,7 @@ function handleMockRequest(url, method, rawData) {
     const subjectName = postData.subject_name || currentSession?.subject_name || "Artificial Intelligence & ML";
     const blockId = Math.floor(Math.random() * 200) + 100;
     const blockHash = "0000" + Math.random().toString(16).substring(2, 12) + "a8f9c1e2";
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     // 🛡️ ANTI-PROXY & BIOMETRIC IDENTITY VERIFICATION:
     // The physical person operating the device camera is Roja M (USN: 3BR23CA060).
@@ -847,7 +847,7 @@ function handleMockRequest(url, method, rawData) {
       reason: postData.reason || "Medical leave application",
       status: "PENDING",
       applied_on: "Today",
-      created_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      created_at: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
     };
     leaves.unshift(newLeave);
     try {

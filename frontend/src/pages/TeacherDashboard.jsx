@@ -53,6 +53,26 @@ export default function TeacherDashboard() {
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [updatingId, setUpdatingId] = useState(null);
 
+  // Helper: Format any time string or object into 12-hour format with AM/PM
+  const format12HourTime = (t) => {
+    if (!t) return '--';
+    const str = String(t).trim();
+    if (/am|pm/i.test(str)) return str;
+    const parts = str.split(':');
+    if (parts.length >= 2) {
+      let h = parseInt(parts[0], 10);
+      const m = parts[1];
+      const s = parts[2] ? parts[2].split('.')[0] : null;
+      if (!isNaN(h)) {
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        const hStr = h < 10 ? `0${h}` : `${h}`;
+        return s ? `${hStr}:${m}:${s} ${ampm}` : `${hStr}:${m} ${ampm}`;
+      }
+    }
+    return str;
+  };
+
   // Subject & Lecture Session States
   const DEFAULT_SUBJECTS = [
     { id: 1, code: 'CS502', name: 'Artificial Intelligence & ML', semester: 5 },
@@ -402,8 +422,8 @@ export default function TeacherDashboard() {
       inside_geofence: true,
       liveness_verified: true,
       liveness_passed: true,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
       date: 'Today',
       verification_method: 'Teacher Manual Override',
       notes: manualReason,
@@ -882,7 +902,7 @@ export default function TeacherDashboard() {
                               <span className="text-[10px] text-gray-400">{r.usn}</span>
                             </td>
                             <td className="px-4 py-2.5 text-gray-300 font-mono text-[11px]">
-                              {r.time?.slice(0, 8)}
+                              {format12HourTime(r.time || r.timestamp)}
                             </td>
                             <td className="px-4 py-2.5">
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
@@ -1244,7 +1264,7 @@ export default function TeacherDashboard() {
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="text-gray-900 dark:text-white font-medium">{item.date}</div>
-                        <div className="text-[11px] text-gray-500">{item.time?.slice(0, 8)}</div>
+                        <div className="text-[11px] text-gray-500">{format12HourTime(item.time || item.timestamp)}</div>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         {item.status === 'PRESENT' ? (

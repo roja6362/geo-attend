@@ -25,10 +25,7 @@ import {
   ShieldCheck,
   FileUp,
   RotateCcw,
-  KeyRound,
-  MapPin,
-  Smartphone,
-  Clipboard
+  KeyRound
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
@@ -284,80 +281,6 @@ export default function AdminDashboard() {
     };
   });
   
-  const [gpsLocating, setGpsLocating] = useState(false);
-  const [gpsFeedback, setGpsFeedback] = useState(null);
-  const [syncedMobileGps, setSyncedMobileGps] = useState(() => {
-    try {
-      const stored = localStorage.getItem('geoattend_last_mobile_gps');
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) { return null; }
-  });
-
-  const handlePinCurrentLocation = () => {
-    // If mobile phone's satellite GPS was already received, offer to use it directly
-    if (syncedMobileGps && syncedMobileGps.latitude && syncedMobileGps.longitude) {
-      const mLat = parseFloat(syncedMobileGps.latitude).toFixed(6);
-      const mLon = parseFloat(syncedMobileGps.longitude).toFixed(6);
-      setSettings(prev => ({
-        ...prev,
-        DEFAULT_LATITUDE: mLat,
-        DEFAULT_LONGITUDE: mLon
-      }));
-      setGpsFeedback({
-        type: 'success',
-        msg: `🎯 Pinned to Mobile Phone's exact Satellite GPS: [${mLat}, ${mLon}] (Accuracy: ±${syncedMobileGps.accuracy || 4}m from ${syncedMobileGps.user_name || 'your phone'}). Classroom matched!`
-      });
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      setGpsFeedback({ type: 'error', msg: 'Geolocation not supported by this browser.' });
-      return;
-    }
-    setGpsLocating(true);
-    setGpsFeedback(null);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGpsLocating(false);
-        const lat = pos.coords.latitude.toFixed(6);
-        const lon = pos.coords.longitude.toFixed(6);
-        const acc = Math.round(pos.coords.accuracy);
-
-        setSettings(prev => ({
-          ...prev,
-          DEFAULT_LATITUDE: lat,
-          DEFAULT_LONGITUDE: lon
-        }));
-
-        if (acc > 50) {
-          setGpsFeedback({
-            type: 'warning',
-            msg: `Laptop browser provided coarse Wi-Fi/IP location (Accuracy: ±${acc}m). Laptops don't have satellite GPS chips. Open the app on your mobile phone or click 'Paste Phone GPS' for building-level precision!`
-          });
-        } else {
-          setGpsFeedback({
-            type: 'success',
-            msg: `GPS acquired (Accuracy: ±${acc}m). Location pinned to [${lat}, ${lon}].`
-          });
-        }
-      },
-      (err) => {
-        setGpsLocating(false);
-        let msg = 'Failed to get location.';
-        if (err.code === 1) msg = 'Location permission denied. Please allow location access in your browser address bar.';
-        else if (err.code === 2) msg = 'Location unavailable on laptop. Please drag the blue pin on the satellite map or use Mobile GPS.';
-        else if (err.code === 3) msg = 'Location request timed out. Drag the pin directly on the map.';
-        setGpsFeedback({ type: 'error', msg });
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0
-      }
-    );
-  };
-  
   // Navigation tab state: 'overview' or 'student-registration'
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -472,25 +395,6 @@ export default function AdminDashboard() {
       if (event.action === 'STUDENT_CHECKIN' || event.action === 'REGISTER_USER') {
         fetchUsers();
         fetchStats();
-      }
-      if (event.action === 'DEVICE_GPS_HEARTBEAT' && event.payload) {
-        setSyncedMobileGps(event.payload);
-        try {
-          localStorage.setItem('geoattend_last_mobile_gps', JSON.stringify(event.payload));
-        } catch (e) {}
-      }
-      if (event.action === 'STUDENT_CHECKIN' && event.record && event.record.latitude) {
-        const liveGps = {
-          latitude: event.record.latitude,
-          longitude: event.record.longitude,
-          accuracy: 4,
-          user_name: event.record.user_name || 'Checked-in Student',
-          timestamp: new Date().toLocaleTimeString()
-        };
-        setSyncedMobileGps(liveGps);
-        try {
-          localStorage.setItem('geoattend_last_mobile_gps', JSON.stringify(liveGps));
-        } catch (e) {}
       }
     });
 
@@ -1261,140 +1165,24 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Pin to my current location helper & Laptop GPS Accuracy Notice */}
-                  <div className="space-y-2.5">
-                    {syncedMobileGps && (
-                      <div className="p-3 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border-2 border-emerald-500/40 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-sm">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-9 w-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                            <Smartphone className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 dark:text-emerald-300">
-                                📡 Live Phone Satellite GPS Detected
-                              </span>
-                              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                            </div>
-                            <span className="font-mono text-xs font-black text-gray-900 dark:text-white block">
-                              {parseFloat(syncedMobileGps.latitude).toFixed(6)}, {parseFloat(syncedMobileGps.longitude).toFixed(6)}
-                            </span>
-                            <span className="text-[10px] text-gray-500">
-                              Accuracy: ±{syncedMobileGps.accuracy || 4}m • {syncedMobileGps.user_name || 'Mobile Phone'}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const lat = parseFloat(syncedMobileGps.latitude).toFixed(6);
-                            const lon = parseFloat(syncedMobileGps.longitude).toFixed(6);
-                            setSettings(prev => ({
-                              ...prev,
-                              DEFAULT_LATITUDE: lat,
-                              DEFAULT_LONGITUDE: lon
-                            }));
-                            setGpsFeedback({
-                              type: 'success',
-                              msg: `🎯 Classroom geofence pinned to Mobile Phone's exact satellite GPS [${lat}, ${lon}]! (±${syncedMobileGps.accuracy || 4}m precision)`
-                            });
-                          }}
-                          className="w-full sm:w-auto px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
-                        >
-                          <Check className="h-4 w-4" />
-                          <span>Use Phone's Live GPS</span>
-                        </button>
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      disabled={gpsLocating}
-                      onClick={handlePinCurrentLocation}
-                      className="w-full py-2.5 px-3 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                    >
-                      {gpsLocating ? (
-                        <>
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                          <span>Acquiring High-Accuracy Geolocation...</span>
-                        </>
-                      ) : (
-                        <>
-                          <MapPin className="h-3.5 w-3.5 text-blue-600" />
-                          <span>📍 Pin to My Current Location (Browser GPS)</span>
-                        </>
-                      )}
-                    </button>
-
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            const text = await navigator.clipboard.readText();
-                            const match = text.match(/([-+]?\d+\.\d+)[,\s]+([-+]?\d+\.\d+)/);
-                            if (match) {
-                              const lat = parseFloat(match[1]).toFixed(6);
-                              const lon = parseFloat(match[2]).toFixed(6);
-                              setSettings(prev => ({ ...prev, DEFAULT_LATITUDE: lat, DEFAULT_LONGITUDE: lon }));
-                              setGpsFeedback({ type: 'success', msg: `📋 Pasted phone coordinates [${lat}, ${lon}] and centered geofence!` });
-                            } else {
-                              setGpsFeedback({ type: 'warning', msg: 'Could not find coordinates in clipboard. Copy from phone or paste manually.' });
-                            }
-                          } catch (e) {
-                            setGpsFeedback({ type: 'error', msg: 'Clipboard access blocked. Please type into the boxes manually.' });
-                          }
-                        }}
-                        className="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-[11px] font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
-                      >
-                        <Clipboard className="h-3.5 w-3.5" />
-                        <span>📋 Paste Phone GPS</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
+                  {/* Pin to my current location helper */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(pos => {
                           setSettings({
                             ...settings,
-                            GEOFENCE_NAME: 'BITM Ballari Campus - CSE Block',
-                            DEFAULT_LATITUDE: '15.168444',
-                            DEFAULT_LONGITUDE: '76.850556',
-                            DEFAULT_RADIUS_METERS: '150'
+                            DEFAULT_LATITUDE: pos.coords.latitude.toFixed(6),
+                            DEFAULT_LONGITUDE: pos.coords.longitude.toFixed(6)
                           });
-                          setGpsFeedback({
-                            type: 'success',
-                            msg: 'Snapped to official BITM Ballari campus center (15.168444, 76.850556).'
-                          });
-                        }}
-                        className="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-[11px] font-semibold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 text-center transition-colors cursor-pointer"
-                      >
-                        🏛️ BITM Campus
-                      </button>
-                    </div>
-
-                    {gpsFeedback && (
-                      <div className={`p-2.5 rounded-xl text-[11px] font-medium border leading-relaxed ${
-                        gpsFeedback.type === 'success' 
-                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                          : gpsFeedback.type === 'warning'
-                          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-                          : 'bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
-                      }`}>
-                        {gpsFeedback.msg}
-                      </div>
-                    )}
-
-                    <div className="p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400 space-y-1">
-                      <div className="font-bold flex items-center gap-1 text-slate-800 dark:text-slate-200">
-                        <span>💡 How to match your exact room:</span>
-                      </div>
-                      <p>
-                        • <strong>Option 1 (Auto):</strong> Open the app on your mobile phone — the laptop will detect your phone's satellite GPS and show the green <em>"Use Phone's Live GPS"</em> button above.<br/>
-                        • <strong>Option 2 (Interactive):</strong> Simply <em>click or drag the blue pin</em> on the satellite map directly onto your classroom roof.<br/>
-                        • <strong>Option 3 (Copy/Paste):</strong> On your phone, tap <em>"Copy GPS"</em>, then on laptop click <em>"📋 Paste Phone GPS"</em> above!
-                      </p>
-                    </div>
-                  </div>
+                        });
+                      }
+                    }}
+                    className="w-full py-2 px-3 bg-gray-100 dark:bg-gray-700/60 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>📍 Pin to My Current Classroom Location (GPS)</span>
+                  </button>
 
                   <form className="space-y-3 text-xs" onSubmit={updateSettings}>
                     <div>

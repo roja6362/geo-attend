@@ -10,6 +10,18 @@ import json
 import random
 import math
 
+def format_12hr_time(t):
+    if not t:
+        return ""
+    if hasattr(t, 'strftime'):
+        return t.strftime('%I:%M:%S %p')
+    try:
+        t_str = str(t).split('.')[0].strip()
+        dt = datetime.strptime(t_str, '%H:%M:%S')
+        return dt.strftime('%I:%M:%S %p')
+    except Exception:
+        return str(t)
+
 attendance_bp = Blueprint('attendance', __name__)
 
 @attendance_bp.route('/challenge', methods=['GET'])
@@ -188,11 +200,14 @@ def mark_attendance():
                 face_msg = f"Biometric Match Verified for {user.name} ({confidence:.1f}% confidence)"
                 final_status = 'PRESENT'
     
-    # 4. Save to Database
+    # 4. Save to Database with real local time (12-hour synchronized)
+    now_local = datetime.now()
     attendance = Attendance(
         student_id=user.id,
         session_id=session_id,
         subject_id=subject_id,
+        date=now_local.date(),
+        time=now_local.time(),
         latitude=lat,
         longitude=lon,
         face_status=is_face_match,
@@ -217,7 +232,7 @@ def mark_attendance():
             'session_id': session_id,
             'room': room_name,
             'date': str(attendance.date),
-            'time': str(attendance.time),
+            'time': format_12hr_time(attendance.time),
             'lat': lat,
             'lon': lon,
             'status': 'PRESENT',
@@ -294,7 +309,8 @@ def get_history():
             "room": room,
             "session_id": a.session_id,
             "date": str(a.date),
-            "time": str(a.time),
+            "time": format_12hr_time(a.time),
+            "timestamp": format_12hr_time(a.time),
             "status": a.final_status,
             "face_verified": a.face_status,
             "geo_verified": a.geo_status,

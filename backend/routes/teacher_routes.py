@@ -7,6 +7,18 @@ import csv
 import io
 import math
 
+def format_12hr_time(t):
+    if not t:
+        return ""
+    if hasattr(t, 'strftime'):
+        return t.strftime('%I:%M:%S %p')
+    try:
+        t_str = str(t).split('.')[0].strip()
+        dt = datetime.strptime(t_str, '%H:%M:%S')
+        return dt.strftime('%I:%M:%S %p')
+    except Exception:
+        return str(t)
+
 teacher_bp = Blueprint('teacher', __name__)
 
 def get_current_user():
@@ -175,7 +187,8 @@ def get_session_rollcall(session_id):
             "student_name": a.student.name if a.student else "Unknown",
             "usn": a.student.usn if a.student else "N/A",
             "department": a.student.department if a.student else "N/A",
-            "time": str(a.time),
+            "time": format_12hr_time(a.time),
+            "timestamp": format_12hr_time(a.time),
             "date": str(a.date),
             "status": a.final_status,
             "face_verified": a.face_status,

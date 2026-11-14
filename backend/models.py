@@ -11,7 +11,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     
     # Student specific fields
     usn = db.Column(db.String(50), unique=True, nullable=True)
@@ -49,7 +49,7 @@ class LectureSession(db.Model):
     title = db.Column(db.String(150), nullable=True) # e.g. 'Lecture 14: Relational Algebra & SQL'
     room = db.Column(db.String(50), default='Room 302')
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     ended_at = db.Column(db.DateTime, nullable=True)
     
     subject = db.relationship('Subject', backref=db.backref('sessions', lazy=True))
@@ -61,8 +61,8 @@ class Attendance(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     session_id = db.Column(db.Integer, db.ForeignKey('lecture_sessions.id'), nullable=True)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True)
-    date = db.Column(db.Date, nullable=False, default=lambda: datetime.utcnow().date())
-    time = db.Column(db.Time, nullable=False, default=lambda: datetime.utcnow().time())
+    date = db.Column(db.Date, nullable=False, default=lambda: datetime.now().date())
+    time = db.Column(db.Time, nullable=False, default=lambda: datetime.now().time())
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     face_status = db.Column(db.Boolean, default=False)
@@ -107,7 +107,7 @@ class LeaveRequest(db.Model):
     status = db.Column(db.String(20), default='PENDING') # 'PENDING', 'APPROVED', 'REJECTED'
     reviewer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     reviewer_comment = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     reviewed_at = db.Column(db.DateTime, nullable=True)
 
     student = db.relationship('User', foreign_keys=[student_id], backref=db.backref('leave_requests', lazy=True))
