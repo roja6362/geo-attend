@@ -96,12 +96,45 @@ function handleIncomingEvent(event) {
       filtered.unshift(payload.record);
       localStorage.setItem('geoattend_active_rollcall', JSON.stringify(filtered));
     } catch (e) {}
+
+    // ALSO save to mock history so Teacher & Admin tables immediately show the punch!
+    try {
+      const history = JSON.parse(localStorage.getItem('geoattend_mock_history') || '[]');
+      const filteredHist = history.filter(h => 
+        h.id !== payload.record.id && 
+        !(h.student_id === payload.record.student_id && h.subject_code === payload.record.subject_code && h.date === payload.record.date)
+      );
+      filteredHist.unshift(payload.record);
+      localStorage.setItem('geoattend_mock_history', JSON.stringify(filteredHist));
+    } catch (e) {}
+
+    // Update active session counts
+    try {
+      const sess = JSON.parse(localStorage.getItem('geoattend_active_session') || 'null');
+      if (sess) {
+        sess.total_marked = (sess.total_marked || 0) + 1;
+        if (payload.record.status === 'PRESENT' || payload.record.final_status === 'PRESENT') {
+          sess.present_count = (sess.present_count || 0) + 1;
+        }
+        localStorage.setItem('geoattend_active_session', JSON.stringify(sess));
+      }
+    } catch (e) {}
   } else if (action === 'REGISTER_USER' && payload?.user) {
     try {
       const users = JSON.parse(localStorage.getItem('geoattend_custom_users') || '[]');
-      if (!users.some(u => u.email?.toLowerCase() === payload.user.email?.toLowerCase())) {
+      const idx = users.findIndex(u => (u.email && payload.user.email && u.email.toLowerCase() === payload.user.email.toLowerCase()) || (u.id && u.id === payload.user.id));
+      if (idx >= 0) {
+        users[idx] = { ...users[idx], ...payload.user };
+      } else {
         users.push(payload.user);
-        localStorage.setItem('geoattend_custom_users', JSON.stringify(users));
+      }
+      localStorage.setItem('geoattend_custom_users', JSON.stringify(users));
+
+      // Cache face portrait if present
+      if (payload.user.face_image) {
+        if (payload.user.id) localStorage.setItem(`geoattend_face_${payload.user.id}`, payload.user.face_image);
+        if (payload.user.email) localStorage.setItem(`geoattend_face_${payload.user.email.toLowerCase().trim()}`, payload.user.face_image);
+        if (payload.user.usn) localStorage.setItem(`geoattend_face_${payload.user.usn.toLowerCase().trim()}`, payload.user.face_image);
       }
     } catch (e) {}
   } else if (action === 'REQUEST_SYNC') {
@@ -125,6 +158,35 @@ let eventSource = null;
 export const initRealtimeSync = () => {
   if (isInitialized) return;
   isInitialized = true;
+
+  // 0. Replay past events from cloud ntfy so freshly opened device (mobile/laptop) loads all records!
+  const loadHistoricalSync = async () => {
+    if (typeof fetch === 'undefined') return;
+    try {
+      const res = await fetch(`${SYNC_URL}/json?poll=1`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const text = await res.text();
+      const lines = text.trim().split('\n').filter(Boolean);
+      for (const line of lines) {
+        try {
+          const item = JSON.parse(line);
+          let event = null;
+          if (item.message) {
+            try { event = JSON.parse(item.message); } catch { event = item; }
+          } else {
+            event = item;
+          }
+          if (event && event.action && event.senderId !== DEVICE_ID) {
+            handleIncomingEvent(event);
+          }
+        } catch (e) {}
+      }
+    } catch (e) {
+      console.warn('Initial cloud historical sync warning:', e);
+    }
+  };
+
+  loadHistoricalSync();
 
   // 1. Listen for BroadcastChannel events from other tabs
   if (bc) {

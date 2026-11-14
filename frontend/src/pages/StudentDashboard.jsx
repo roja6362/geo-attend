@@ -45,7 +45,7 @@ import {
   CheckCircle2,
   Key,
   Clock3,
-  Lock
+  Lock as LockIcon
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
@@ -2167,7 +2167,7 @@ export default function StudentDashboard() {
                         }
                       </p>
                       <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-semibold border border-gray-200 dark:border-gray-700">
-                        <Lock className="h-3.5 w-3.5 text-gray-500" />
+                        <LockIcon className="h-3.5 w-3.5 text-gray-500" />
                         <span>Official ID Photo (Enrolled by Admin - Read Only)</span>
                       </div>
                     </div>

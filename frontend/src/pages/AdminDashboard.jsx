@@ -105,6 +105,48 @@ const DEFAULT_RECORDS = [
     time: "11:00 AM",
     status: "PRESENT",
     final_status: "PRESENT"
+  },
+  {
+    id: 1005,
+    student_id: 9,
+    student_name: "M Padmavathi",
+    roll_no: "3BR23CA058",
+    usn: "3BR23CA058",
+    department: "CSE-AI",
+    subject_name: "Artificial Intelligence & ML",
+    subject_code: "CS502",
+    date: "Today",
+    time: "10:33 AM",
+    status: "PRESENT",
+    final_status: "PRESENT"
+  },
+  {
+    id: 1006,
+    student_id: 5,
+    student_name: "Manisha",
+    roll_no: "3BR23CA066",
+    usn: "3BR23CA066",
+    department: "CSE-AI",
+    subject_name: "Artificial Intelligence & ML",
+    subject_code: "CS502",
+    date: "Today",
+    time: "10:35 AM",
+    status: "PRESENT",
+    final_status: "PRESENT"
+  },
+  {
+    id: 1007,
+    student_id: 12,
+    student_name: "Spoorthi",
+    roll_no: "3BR23CA105",
+    usn: "3BR23CA105",
+    department: "CSE-AI",
+    subject_name: "Artificial Intelligence & ML",
+    subject_code: "CS502",
+    date: "Today",
+    time: "10:36 AM",
+    status: "PRESENT",
+    final_status: "PRESENT"
   }
 ];
 

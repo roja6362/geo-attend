@@ -40,19 +40,41 @@ class ErrorBoundary extends Component {
             </p>
             <div className="flex gap-2 justify-center pt-2">
               <button
-                onClick={() => {
+                onClick={async () => {
+                  try {
+                    if ('serviceWorker' in navigator) {
+                      const regs = await navigator.serviceWorker.getRegistrations();
+                      for (const reg of regs) await reg.unregister();
+                    }
+                    if ('caches' in window) {
+                      const keys = await caches.keys();
+                      for (const key of keys) await caches.delete(key);
+                    }
+                  } catch (e) {}
                   this.setState({ hasError: false });
                   window.location.href = '/';
                 }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition-all"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
               >
                 Go to Portals
               </button>
               <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-xs font-semibold rounded-xl transition-all"
+                onClick={async () => {
+                  try {
+                    if ('serviceWorker' in navigator) {
+                      const regs = await navigator.serviceWorker.getRegistrations();
+                      for (const reg of regs) await reg.unregister();
+                    }
+                    if ('caches' in window) {
+                      const keys = await caches.keys();
+                      for (const key of keys) await caches.delete(key);
+                    }
+                  } catch (e) {}
+                  window.location.reload(true);
+                }}
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
               >
-                Reload Page
+                Reload & Purge Cache
               </button>
             </div>
           </div>
