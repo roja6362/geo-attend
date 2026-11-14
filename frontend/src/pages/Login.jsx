@@ -119,7 +119,62 @@ export default function Login() {
               role: "student",
               usn: "3BR23CA060",
               roll_no: "3BR23CA060",
-              department: "Computer Science (AI & ML)",
+              department: "CSE-AI",
+              semester: 7
+            };
+          } else if (cleanEmail.includes('padma') || cleanEmail === 'mp6579113@gmail.com') {
+            simulatedUser = {
+              id: 9,
+              name: "M Padmavathi",
+              email: "mp6579113@gmail.com",
+              role: "student",
+              usn: "3BR23CA058",
+              roll_no: "3BR23CA058",
+              department: "CSE-AI",
+              semester: 7
+            };
+          } else if (cleanEmail.includes('spoorthi') || cleanEmail === 'spoorthiellur05@gmail.com') {
+            simulatedUser = {
+              id: 12,
+              name: "Spoorthi",
+              email: "spoorthiellur05@gmail.com",
+              role: "student",
+              usn: "3BR23CA105",
+              roll_no: "3BR23CA105",
+              department: "CSE-AI",
+              semester: 7
+            };
+          } else if (cleanEmail.includes('shravani') || cleanEmail === 'shravani@gmail.com') {
+            simulatedUser = {
+              id: 6,
+              name: "Shravani B",
+              email: "shravani@gmail.com",
+              role: "student",
+              usn: "3BR23CA101",
+              roll_no: "3BR23CA101",
+              department: "CSE-AI",
+              semester: 7
+            };
+          } else if (cleanEmail.includes('ankitha') || cleanEmail === 'ankitha@gmail.com') {
+            simulatedUser = {
+              id: 7,
+              name: "Ankitha",
+              email: "ankitha@gmail.com",
+              role: "student",
+              usn: "3BR23CA113",
+              roll_no: "3BR23CA113",
+              department: "CSE-AI",
+              semester: 7
+            };
+          } else if (cleanEmail.includes('anu') || cleanEmail === 'anu@gmail.com') {
+            simulatedUser = {
+              id: 8,
+              name: "Anu",
+              email: "anu@gmail.com",
+              role: "student",
+              usn: "3BR23CD057",
+              roll_no: "3BR23CD057",
+              department: "CSE-DATA SCIENCE",
               semester: 7
             };
           } else if (cleanEmail.includes('rahul') || cleanEmail === 'student@college.edu') {
@@ -144,16 +199,16 @@ export default function Login() {
               department: "Computer Science",
               semester: 5
             };
-          } else if (cleanEmail.includes('manisha')) {
+          } else if (cleanEmail.includes('manisha') || cleanEmail === 'manisha@gmail.com') {
             simulatedUser = {
               id: 5,
               name: "Manisha",
-              email: cleanEmail,
+              email: "manisha@gmail.com",
               role: "student",
-              roll_no: "CS2024005",
-              usn: "CS2024005",
-              department: "Computer Science",
-              semester: 5
+              roll_no: "3BR23CA066",
+              usn: "3BR23CA066",
+              department: "CSE-AI",
+              semester: 7
             };
           } else {
             const displayName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -378,32 +433,46 @@ export default function Login() {
               Quick Accounts:
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => fillCredentials('student', 'thimmareddym4@gmail.com', 'MRoja@2004')}
-              className="py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-medium text-center transition-colors"
+              className="py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-medium text-center transition-colors cursor-pointer"
             >
               M Roja
             </button>
             <button
               type="button"
-              onClick={() => fillCredentials('student', 'student@college.edu', 'password123')}
-              className="py-1.5 px-2 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 rounded-lg text-[11px] font-medium text-center transition-colors"
+              onClick={() => fillCredentials('student', 'mp6579113@gmail.com', 'password123')}
+              className="py-1.5 px-2 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-300 rounded-lg text-[11px] font-medium text-center transition-colors cursor-pointer"
             >
-              Student
+              Padmavathi
+            </button>
+            <button
+              type="button"
+              onClick={() => fillCredentials('student', 'spoorthiellur05@gmail.com', 'password123')}
+              className="py-1.5 px-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded-lg text-[11px] font-medium text-center transition-colors cursor-pointer"
+            >
+              Spoorthi
+            </button>
+            <button
+              type="button"
+              onClick={() => fillCredentials('student', 'manisha@gmail.com', 'password123')}
+              className="py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-medium text-center transition-colors cursor-pointer"
+            >
+              Manisha
             </button>
             <button
               type="button"
               onClick={() => fillCredentials('teacher')}
-              className="py-1.5 px-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 rounded-lg text-[11px] font-medium text-center transition-colors"
+              className="py-1.5 px-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 rounded-lg text-[11px] font-medium text-center transition-colors cursor-pointer"
             >
               Teacher
             </button>
             <button
               type="button"
               onClick={() => fillCredentials('admin')}
-              className="py-1.5 px-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 rounded-lg text-[11px] font-medium text-center transition-colors"
+              className="py-1.5 px-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 rounded-lg text-[11px] font-medium text-center transition-colors cursor-pointer"
             >
               Admin
             </button>

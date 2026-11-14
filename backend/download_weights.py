@@ -9,13 +9,28 @@ def progress_hook(count, block_size, total_size):
     sys.stdout.flush()
 
 def download_weights():
-    weights_dir = os.path.expanduser('~/.deepface/weights')
-    os.makedirs(weights_dir, exist_ok=True)
-    file_path = os.path.join(weights_dir, 'facenet_weights.h5')
+    # Check both backend/.deepface/weights and ~/.deepface/weights
+    local_weights_dir = os.path.join(os.path.dirname(__file__), '.deepface', 'weights')
+    os.makedirs(local_weights_dir, exist_ok=True)
+    local_path = os.path.join(local_weights_dir, 'facenet_weights.h5')
     
-    if os.path.exists(file_path) and os.path.getsize(file_path) > 10000000:
-        print(f"Facenet weights already present and verified at {file_path}")
+    # If present in local, it is ready!
+    if os.path.exists(local_path) and os.path.getsize(local_path) > 10000000:
+        print(f"Facenet weights verified at {local_path}")
         return True
+
+    try:
+        home_weights_dir = os.path.expanduser('~/.deepface/weights')
+        home_path = os.path.join(home_weights_dir, 'facenet_weights.h5')
+        if os.path.exists(home_path) and os.path.getsize(home_path) > 10000000:
+            import shutil
+            shutil.copyfile(home_path, local_path)
+            print(f"Copied Facenet weights from {home_path} to {local_path}")
+            return True
+    except Exception:
+        pass
+
+    file_path = local_path
     
     urls = [
         "https://huggingface.co/junjiang/GestureFace/resolve/main/facenet_weights.h5",

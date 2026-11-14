@@ -24,12 +24,15 @@ function isHtmlPayload(data) {
 export const DEFAULT_USERS = [
   { id: 1, name: "Super Admin", email: "admin@college.edu", role: "admin", department: "Administration", face_registered: true },
   { id: 11, name: "Prof. Ramesh Kumar", email: "teacher@college.edu", role: "teacher", department: "Computer Science", face_registered: true },
-  { id: 13, name: "M Roja", email: "thimmareddym4@gmail.com", role: "student", usn: "3BR23CA060", department: "Computer Science (AI & ML)", semester: 7, face_registered: true },
-  { id: 3, name: "Rahul Sharma", email: "student@college.edu", role: "student", usn: "CS2024001", department: "Computer Science", semester: 5, face_registered: true },
-  { id: 4, name: "Ananya Patel", email: "ananya@college.edu", role: "student", usn: "CS2024002", department: "Computer Science", semester: 5, face_registered: true },
-  { id: 5, name: "Manisha", email: "manisha@gmail.com", role: "student", usn: "CS2024005", department: "Computer Science", semester: 5, face_registered: true },
-  { id: 6, name: "Shravani B", email: "shravani@gmail.com", role: "student", usn: "CS2024006", department: "Computer Science", semester: 5, face_registered: true },
-  { id: 12, name: "Spoorthi", email: "spoorthiellur05@gmail.com", role: "student", usn: "CS2024012", department: "Computer Science", semester: 5, face_registered: true }
+  { id: 13, name: "M Roja", email: "thimmareddym4@gmail.com", role: "student", usn: "3BR23CA060", department: "CSE-AI", semester: 7, phone_number: "6362133938", face_registered: true },
+  { id: 9, name: "M Padmavathi", email: "mp6579113@gmail.com", role: "student", usn: "3BR23CA058", department: "CSE-AI", semester: 7, phone_number: "7892971919", face_registered: true },
+  { id: 5, name: "Manisha", email: "manisha@gmail.com", role: "student", usn: "3BR23CA066", department: "CSE-AI", semester: 7, face_registered: true },
+  { id: 12, name: "Spoorthi", email: "spoorthiellur05@gmail.com", role: "student", usn: "3BR23CA105", department: "CSE-AI", semester: 7, phone_number: "9741450703", face_registered: true },
+  { id: 6, name: "Shravani B", email: "shravani@gmail.com", role: "student", usn: "3BR23CA101", department: "CSE-AI", semester: 7, phone_number: "7897098899", face_registered: true },
+  { id: 7, name: "Ankitha", email: "ankitha@gmail.com", role: "student", usn: "3BR23CA113", department: "CSE-AI", semester: 7, phone_number: "5687980999", face_registered: true },
+  { id: 8, name: "Anu", email: "anu@gmail.com", role: "student", usn: "3BR23CD057", department: "CSE-DATA SCIENCE", semester: 7, phone_number: "7207982519", face_registered: true },
+  { id: 14, name: "Rahul Sharma", email: "student@college.edu", role: "student", usn: "3BR23CA012", department: "Computer Science & Engineering", semester: 5, face_registered: true },
+  { id: 15, name: "Ananya Patel", email: "ananya@college.edu", role: "student", usn: "3BR23CA005", department: "Computer Science & Engineering", semester: 5, face_registered: true }
 ];
 
 export const DEFAULT_RECORDS = [

@@ -347,6 +347,10 @@ export function getRegisteredStudentPhoto(user) {
     if (cleanEmail.includes('ananya') || cleanName.includes('ananya')) return DEFAULT_STUDENT_PHOTOS.ananya;
     if (cleanEmail.includes('spoorthi') || cleanName.includes('spoorthi')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
     if (cleanEmail.includes('manisha') || cleanName.includes('manisha')) return DEFAULT_STUDENT_PHOTOS.manisha;
+    if (cleanEmail.includes('padma') || cleanName.includes('padma') || cleanEmail === 'mp6579113@gmail.com') return DEFAULT_STUDENT_PHOTOS.ananya;
+    if (cleanEmail.includes('shravani') || cleanName.includes('shravani')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
+    if (cleanEmail.includes('ankitha') || cleanName.includes('ankitha')) return DEFAULT_STUDENT_PHOTOS.manisha;
+    if (cleanEmail.includes('anu') || cleanName.includes('anu')) return DEFAULT_STUDENT_PHOTOS.ananya;
   } catch (e) {}
 
   return null;
