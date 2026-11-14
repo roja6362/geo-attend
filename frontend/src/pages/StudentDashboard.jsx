@@ -447,6 +447,19 @@ export default function StudentDashboard() {
         setLocation(coords);
         setGpsError(null);
 
+        // 📡 Broadcast live phone satellite GPS to laptop admin in real-time
+        try {
+          const gpsPayload = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: Math.round(position.coords.accuracy || 4),
+            user_name: user?.name || 'Mobile Phone',
+            timestamp: new Date().toLocaleTimeString()
+          };
+          broadcastEvent('DEVICE_GPS_HEARTBEAT', gpsPayload);
+          localStorage.setItem('geoattend_last_mobile_gps', JSON.stringify(gpsPayload));
+        } catch (e) {}
+
         const targetLat = parseFloat(geofence?.latitude || 15.167692);
         const targetLon = parseFloat(geofence?.longitude || 76.850600);
         const targetRad = parseFloat(geofence?.radius || 100);
@@ -1477,13 +1490,36 @@ export default function StudentDashboard() {
                     {gpsError ? (
                       <span className="text-amber-600 dark:text-amber-400 font-medium">{gpsError}</span>
                     ) : location && distanceFromCenter !== null ? (
-                      isInsideGeofence ? (
-                        <span>GPS Verified inside perimeter • {Math.round(distanceFromCenter)}m from center (Limit: {geofence?.radius || 100}m)</span>
-                      ) : (
-                        <span className="text-red-600 dark:text-red-400 font-medium">
-                          {distanceFromCenter >= 1000 ? `${(distanceFromCenter / 1000).toFixed(1)} km` : `${Math.round(distanceFromCenter)}m`} away from classroom (Allowed: {geofence?.radius || 100}m)
-                        </span>
-                      )
+                      <div>
+                        <div>
+                          {isInsideGeofence ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                              GPS Verified inside perimeter • {Math.round(distanceFromCenter)}m from center (Limit: {geofence?.radius || 100}m)
+                            </span>
+                          ) : (
+                            <span className="text-red-600 dark:text-red-400 font-medium">
+                              {distanceFromCenter >= 1000 ? `${(distanceFromCenter / 1000).toFixed(1)} km` : `${Math.round(distanceFromCenter)}m`} away from classroom (Allowed: {geofence?.radius || 100}m)
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="font-mono text-[10px] text-gray-500 dark:text-gray-400">
+                            📍 Phone GPS: {location.lat.toFixed(6)}, {location.lon.toFixed(6)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                navigator.clipboard.writeText(`${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}`);
+                                alert(`Copied GPS coordinates: ${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}`);
+                              } catch (e) {}
+                            }}
+                            className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
+                          >
+                            Copy GPS
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       'Acquiring high-accuracy GPS coordinates...'
                     )}
