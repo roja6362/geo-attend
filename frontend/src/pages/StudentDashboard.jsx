@@ -44,8 +44,7 @@ import {
   TrendingUp,
   CheckCircle2,
   Key,
-  Clock3,
-  Lock as LockIcon
+  Clock3
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import MapComponent from '../components/MapComponent';
@@ -2167,7 +2166,10 @@ export default function StudentDashboard() {
                         }
                       </p>
                       <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-semibold border border-gray-200 dark:border-gray-700">
-                        <LockIcon className="h-3.5 w-3.5 text-gray-500" />
+                        <svg className="h-3.5 w-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeWidth="2"/>
+                          <path d="M7 11V7a5 5 0 0110 0v4" strokeWidth="2"/>
+                        </svg>
                         <span>Official ID Photo (Enrolled by Admin - Read Only)</span>
                       </div>
                     </div>

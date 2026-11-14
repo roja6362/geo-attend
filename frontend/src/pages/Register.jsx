@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import Webcam from 'react-webcam';
-import { User, Mail, Lock, BookOpen, GraduationCap, ArrowLeft, Loader2, Camera, Upload, Trash2, CheckCircle2, ShieldAlert, Fingerprint, Compass, Server, ShieldCheck } from 'lucide-react';
+import { User, Mail, Key, BookOpen, GraduationCap, ArrowLeft, Loader2, Camera, Upload, Trash2, CheckCircle2, ShieldAlert, Fingerprint, Compass, Server, ShieldCheck } from 'lucide-react';
 import { API_URL } from '../config';
 import { saveRegisteredStudentPhoto } from '../faceBiometrics';
+import { broadcastEvent } from '../realtimeSync';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -91,6 +92,17 @@ export default function Register() {
         await saveRegisteredStudentPhoto(studentObj, faceImage);
       }
 
+      broadcastEvent('REGISTER_USER', {
+        user: {
+          id: newUserId,
+          name: formData.name,
+          email: cleanEmail,
+          role: formData.role,
+          usn: formData.usn,
+          face_registered: !!faceImage
+        }
+      });
+
       navigate('/login');
     } catch (err) {
       // Resilient local storage so new students can immediately log in & punch even offline
@@ -111,6 +123,17 @@ export default function Register() {
         if (faceImage) {
           await saveRegisteredStudentPhoto(studentObj, faceImage);
         }
+
+        broadcastEvent('REGISTER_USER', {
+          user: {
+            id: newUserId,
+            name: formData.name,
+            email: cleanEmail,
+            role: formData.role,
+            usn: formData.usn,
+            face_registered: !!faceImage
+          }
+        });
 
         navigate('/login');
       } catch (localErr) {
@@ -237,7 +260,7 @@ export default function Register() {
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Password</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Lock className="h-4 w-4 text-slate-400 dark:text-slate-505" />
+                    <Key className="h-4 w-4 text-slate-400 dark:text-slate-505" />
                   </div>
                   <input
                     required

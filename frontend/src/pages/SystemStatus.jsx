@@ -15,8 +15,7 @@ import {
   RefreshCw,
   Zap,
   Globe,
-  Wifi,
-  Lock
+  Wifi
 } from 'lucide-react';
 import { API_URL, getApiBaseUrl } from '../config';
 
@@ -278,7 +277,7 @@ export default function SystemStatus() {
         <div className="rounded-3xl bg-slate-900/60 border border-white/10 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30">
-              <Lock className="h-6 w-6" />
+              <ShieldCheck className="h-6 w-6" />
             </div>
             <div>
               <h4 className="font-bold text-sm text-white">

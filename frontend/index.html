@@ -7,6 +7,9 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <!-- Google Fonts - Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,15 +32,33 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js?v=50').then(function(reg) {
-            reg.update();
-          }).catch(function(err) {
-            console.log('SW registration error:', err);
+      // 🚀 Auto-purge old caches and stale service workers across mobile & laptop
+      (function() {
+        var APP_VER = 'geo-attend-v52-live';
+        if (localStorage.getItem('geoattend_app_ver') !== APP_VER) {
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              keys.forEach(function(k) { caches.delete(k); });
+            });
+          }
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(r) { r.unregister(); });
+            });
+          }
+          localStorage.setItem('geoattend_app_ver', APP_VER);
+        }
+
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js?v=52').then(function(reg) {
+              reg.update();
+            }).catch(function(err) {
+              console.log('SW registration error:', err);
+            });
           });
-        });
-      }
+        }
+      })();
     </script>
   </body>
 </html>

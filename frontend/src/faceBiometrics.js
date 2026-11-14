@@ -342,15 +342,16 @@ export function getRegisteredStudentPhoto(user) {
   try {
     const cleanEmail = (user.email || '').toLowerCase().trim();
     const cleanName = (user.name || '').toLowerCase().trim();
-    if (cleanEmail.includes('roja') || cleanName.includes('roja') || cleanEmail === 'thimmareddym4@gmail.com') return DEFAULT_STUDENT_PHOTOS.roja;
-    if (cleanEmail.includes('rahul') || cleanName.includes('rahul') || cleanEmail === 'student@college.edu') return DEFAULT_STUDENT_PHOTOS.rahul;
-    if (cleanEmail.includes('ananya') || cleanName.includes('ananya')) return DEFAULT_STUDENT_PHOTOS.ananya;
-    if (cleanEmail.includes('spoorthi') || cleanName.includes('spoorthi')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
-    if (cleanEmail.includes('manisha') || cleanName.includes('manisha')) return DEFAULT_STUDENT_PHOTOS.manisha;
-    if (cleanEmail.includes('padma') || cleanName.includes('padma') || cleanEmail === 'mp6579113@gmail.com') return DEFAULT_STUDENT_PHOTOS.ananya;
-    if (cleanEmail.includes('shravani') || cleanName.includes('shravani')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
-    if (cleanEmail.includes('ankitha') || cleanName.includes('ankitha')) return DEFAULT_STUDENT_PHOTOS.manisha;
-    if (cleanEmail.includes('anu') || cleanName.includes('anu')) return DEFAULT_STUDENT_PHOTOS.ananya;
+    const cleanUsn = (user.usn || '').toLowerCase().trim();
+    if (cleanEmail.includes('roja') || cleanName.includes('roja') || cleanEmail === 'thimmareddym4@gmail.com' || cleanUsn.includes('060')) return DEFAULT_STUDENT_PHOTOS.roja;
+    if (cleanEmail.includes('padma') || cleanName.includes('padma') || cleanEmail === 'mp6579113@gmail.com' || cleanUsn.includes('058')) return DEFAULT_STUDENT_PHOTOS.padma || DEFAULT_STUDENT_PHOTOS.ananya;
+    if (cleanEmail.includes('manisha') || cleanName.includes('manisha') || cleanUsn.includes('066')) return DEFAULT_STUDENT_PHOTOS.manisha;
+    if (cleanEmail.includes('spoorthi') || cleanName.includes('spoorthi') || cleanEmail === 'spoorthiellur05@gmail.com' || cleanUsn.includes('105')) return DEFAULT_STUDENT_PHOTOS.spoorthi;
+    if (cleanEmail.includes('shravani') || cleanName.includes('shravani') || cleanUsn.includes('101')) return DEFAULT_STUDENT_PHOTOS.shravani || DEFAULT_STUDENT_PHOTOS.spoorthi;
+    if (cleanEmail.includes('ankitha') || cleanName.includes('ankitha') || cleanUsn.includes('113')) return DEFAULT_STUDENT_PHOTOS.ankitha || DEFAULT_STUDENT_PHOTOS.manisha;
+    if (cleanEmail.includes('anu') || cleanName.includes('anu') || cleanUsn.includes('057')) return DEFAULT_STUDENT_PHOTOS.anu || DEFAULT_STUDENT_PHOTOS.ananya;
+    if (cleanEmail.includes('rahul') || cleanName.includes('rahul') || cleanEmail === 'student@college.edu' || cleanUsn.includes('012')) return DEFAULT_STUDENT_PHOTOS.rahul;
+    if (cleanEmail.includes('ananya') || cleanName.includes('ananya') || cleanUsn.includes('005')) return DEFAULT_STUDENT_PHOTOS.ananya;
   } catch (e) {}
 
   return null;

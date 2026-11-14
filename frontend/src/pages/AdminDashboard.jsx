@@ -17,7 +17,6 @@ import {
   Activity,
   AlertTriangle,
   FileText,
-  Lock,
   Search,
   Filter,
   Check,
@@ -1654,7 +1653,7 @@ export default function AdminDashboard() {
                   <span className="text-[11px] text-gray-500">Immutable ledger</span>
                 </div>
                 <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600">
-                  <Lock className="h-6 w-6" />
+                  <ShieldCheck className="h-6 w-6" />
                 </div>
               </div>
             </div>

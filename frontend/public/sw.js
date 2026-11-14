@@ -1,5 +1,5 @@
 // Geo-Attend Service Worker for Mobile PWA Installation & Offline Support
-const CACHE_NAME = 'geo-attend-v50-live-multidevice-fixed';
+const CACHE_NAME = 'geo-attend-v52-live-multidevice-fixed';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

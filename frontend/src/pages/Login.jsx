@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Fingerprint, 
-  Lock, 
+  Key, 
   Mail, 
   GraduationCap, 
   BookOpen, 
@@ -397,7 +397,7 @@ export default function Login() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                <Lock className="h-4 w-4" />
+                <Key className="h-4 w-4" />
               </div>
               <input
                 type="password"
